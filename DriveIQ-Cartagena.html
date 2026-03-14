@@ -1,0 +1,2213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DriveIQ">
+  <meta name="theme-color" content="#F5A623">
+  <meta name="description" content="Asistente inteligente para conductores de Cartagena — Uber, inDriver, DiDi">
+  <title>DriveIQ — Cartagena</title>
+  <link rel="manifest" id="manifest-link">
+  <link rel="apple-touch-icon" id="apple-icon">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{height:100%;background:#070B14;overflow-x:hidden;overscroll-behavior:none}
+    #root{height:100%;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+    button{user-select:none;-webkit-user-select:none}
+    @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+    #splash{position:fixed;inset:0;background:#070B14;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;gap:16px;transition:opacity 0.5s}
+    #splash svg{width:96px;height:96px;border-radius:20px}
+    #splash-title{font-family:sans-serif;font-size:28px;font-weight:800;color:#F1F5F9;letter-spacing:-1px}
+    #splash-sub{font-family:sans-serif;font-size:13px;color:#475569}
+    #splash-bar{width:160px;height:3px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;margin-top:8px}
+    #splash-progress{height:100%;background:linear-gradient(90deg,#F5A623,#F97316);border-radius:3px;width:0;transition:width 2s ease}
+  </style>
+</head>
+<body>
+
+<!-- Splash screen -->
+<div id="splash">
+  <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+    <rect width="512" height="512" rx="96" fill="#070B14"/>
+    <rect x="80" y="220" width="352" height="180" rx="28" fill="#F5A623"/>
+    <rect x="130" y="150" width="252" height="110" rx="20" fill="#F5A623"/>
+    <rect x="148" y="168" width="100" height="72" rx="10" fill="#93C5FD"/>
+    <rect x="264" y="168" width="100" height="72" rx="10" fill="#93C5FD"/>
+    <circle cx="155" cy="405" r="42" fill="#111"/>
+    <circle cx="155" cy="405" r="22" fill="#555"/>
+    <circle cx="357" cy="405" r="42" fill="#111"/>
+    <circle cx="357" cy="405" r="22" fill="#555"/>
+    <rect x="60" y="290" width="40" height="70" rx="8" fill="#F97316"/>
+    <rect x="412" y="290" width="40" height="70" rx="8" fill="#F97316"/>
+  </svg>
+  <div id="splash-title">Drive<span style="color:#F5A623">IQ</span></div>
+  <div id="splash-sub">Cartagena de Indias</div>
+  <div id="splash-bar"><div id="splash-progress"></div></div>
+</div>
+
+<div id="root"></div>
+
+<script>
+// ── Inject manifest & icon dynamically ──────────────────────────────────
+(function(){
+  const manifest = '{\n  "name": "DriveIQ Cartagena",\n  "short_name": "DriveIQ",\n  "description": "Asistente inteligente para conductores de Cartagena",\n  "start_url": ".",\n  "display": "standalone",\n  "background_color": "#070B14",\n  "theme_color": "#F5A623",\n  "orientation": "portrait-primary",\n  "lang": "es-CO",\n  "categories": ["productivity", "utilities"],\n  "icons": [\n    { "src": "data:image/svg+xml,<svg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%20512%20512%27>%20%20<rect%20width=%27512%27%20height=%27512%27%20rx=%2796%27%20fill=%27%23070B14%27/>%20%20<rect%20x=%2780%27%20y=%27220%27%20width=%27352%27%20height=%27180%27%20rx=%2728%27%20fill=%27%23F5A623%27/>%20%20<rect%20x=%27130%27%20y=%27150%27%20width=%27252%27%20height=%27110%27%20rx=%2720%27%20fill=%27%23F5A623%27/>%20%20<rect%20x=%27148%27%20y=%27168%27%20width=%27100%27%20height=%2772%27%20rx=%2710%27%20fill=%27%2393C5FD%27/>%20%20<rect%20x=%27264%27%20y=%27168%27%20width=%27100%27%20height=%2772%27%20rx=%2710%27%20fill=%27%2393C5FD%27/>%20%20<circle%20cx=%27155%27%20cy=%27405%27%20r=%2742%27%20fill=%27%23111%27/>%20%20<circle%20cx=%27155%27%20cy=%27405%27%20r=%2722%27%20fill=%27%23555%27/>%20%20<circle%20cx=%27357%27%20cy=%27405%27%20r=%2742%27%20fill=%27%23111%27/>%20%20<circle%20cx=%27357%27%20cy=%27405%27%20r=%2722%27%20fill=%27%23555%27/>%20%20<rect%20x=%2760%27%20y=%27290%27%20width=%2740%27%20height=%2770%27%20rx=%278%27%20fill=%27%23F97316%27/>%20%20<rect%20x=%27412%27%20y=%27290%27%20width=%2740%27%20height=%2770%27%20rx=%278%27%20fill=%27%23F97316%27/>%20%20<rect%20x=%27200%27%20y=%27148%27%20width=%27112%27%20height=%2720%27%20rx=%276%27%20fill=%27%23F5A623%27/></svg>", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }\n  ]\n}';
+  const blob = new Blob([manifest], {type:'application/manifest+json'});
+  document.getElementById('manifest-link').href = URL.createObjectURL(blob);
+
+  const iconSvg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'>
+    <rect width='512' height='512' rx='96' fill='#070B14'/>
+    <rect x='80' y='220' width='352' height='180' rx='28' fill='#F5A623'/>
+    <rect x='130' y='150' width='252' height='110' rx='20' fill='#F5A623'/>
+    <rect x='148' y='168' width='100' height='72' rx='10' fill='#93C5FD'/>
+    <rect x='264' y='168' width='100' height='72' rx='10' fill='#93C5FD'/>
+    <circle cx='155' cy='405' r='42' fill='#111'/><circle cx='155' cy='405' r='22' fill='#555'/>
+    <circle cx='357' cy='405' r='42' fill='#111'/><circle cx='357' cy='405' r='22' fill='#555'/>
+    <rect x='60' y='290' width='40' height='70' rx='8' fill='#F97316'/>
+    <rect x='412' y='290' width='40' height='70' rx='8' fill='#F97316'/>
+  </svg>`;
+  const iconBlob = new Blob([iconSvg], {type:'image/svg+xml'});
+  document.getElementById('apple-icon').href = URL.createObjectURL(iconBlob);
+})();
+
+// ── Splash logic ─────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  requestAnimationFrame(() => {
+    document.getElementById('splash-progress').style.width = '100%';
+    setTimeout(() => {
+      const s = document.getElementById('splash');
+      s.style.opacity = '0';
+      setTimeout(() => s.remove(), 500);
+    }, 1800);
+  });
+});
+
+// ── Service Worker (offline cache) ───────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  const swCode = `
+    const CACHE = 'driveiq-ctg-v2';
+    self.addEventListener('install', e => {
+      self.skipWaiting();
+      e.waitUntil(caches.open(CACHE).then(c => c.add(location.pathname)));
+    });
+    self.addEventListener('activate', e => {
+      e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));
+      self.clients.claim();
+    });
+    self.addEventListener('fetch', e => {
+      if (e.request.url.includes('unpkg.com') || e.request.url.includes('googleapis.com') || e.request.url.includes('anthropic.com')) {
+        e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+        return;
+      }
+      e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).then(resp => {
+        caches.open(CACHE).then(c => c.put(e.request, resp.clone()));
+        return resp;
+      })));
+    });
+  `;
+  const swBlob = new Blob([swCode], {type:'application/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(()=>{});
+}
+
+// ── PWA Install — Android + iOS ──────────────────────────────────────────
+let deferredPrompt = null;
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+  || window.navigator.standalone === true;
+
+function showInstallBanner() {
+  if (isStandalone) return; // already installed
+  if (document.getElementById('driveiq-install-banner')) return; // already showing
+
+  const b = document.createElement('div');
+  b.id = 'driveiq-install-banner';
+  b.style.cssText = [
+    'position:fixed','bottom:80px','left:50%','transform:translateX(-50%)',
+    'background:#1E293B','border:1px solid rgba(245,166,35,0.55)',
+    'border-radius:16px','padding:14px 16px',
+    'display:flex','align-items:center','gap:12px',
+    'z-index:99999','max-width:360px','width:calc(100% - 24px)',
+    'box-shadow:0 12px 40px rgba(0,0,0,0.7)','animation:slideUp 0.35s ease',
+    'font-family:sans-serif'
+  ].join(';');
+
+  if (isIOS) {
+    // iOS: manual instructions (no prompt API)
+    b.innerHTML = `
+      <span style="font-size:28px;flex-shrink:0">📲</span>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:700;color:#F1F5F9;margin-bottom:4px">Instalar en iPhone/iPad</div>
+        <div style="font-size:11px;color:#94A3B8;line-height:1.5">
+          1. Toca <b style="color:#60A5FA">⎋ Compartir</b> en Safari<br>
+          2. Selecciona <b style="color:#60A5FA">"Agregar a pantalla de inicio"</b>
+        </div>
+      </div>
+      <button id="driveiq-dismiss" style="background:none;border:none;color:#475569;font-size:22px;cursor:pointer;padding:4px;flex-shrink:0">✕</button>`;
+  } else if (deferredPrompt) {
+    // Android Chrome: native install prompt
+    b.innerHTML = `
+      <span style="font-size:28px;flex-shrink:0">📲</span>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:700;color:#F1F5F9">Instalar DriveIQ</div>
+        <div style="font-size:11px;color:#64748B;margin-top:2px">Agregar a pantalla de inicio — sin Play Store</div>
+      </div>
+      <button id="driveiq-install-btn" style="background:linear-gradient(135deg,#F5A623,#F97316);border:none;border-radius:10px;color:#fff;font-weight:800;font-size:12px;padding:9px 14px;cursor:pointer;white-space:nowrap;flex-shrink:0">Instalar</button>
+      <button id="driveiq-dismiss" style="background:none;border:none;color:#475569;font-size:22px;cursor:pointer;padding:4px;flex-shrink:0">✕</button>`;
+  } else {
+    // Fallback: Chrome menu instructions
+    b.innerHTML = `
+      <span style="font-size:28px;flex-shrink:0">📲</span>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:700;color:#F1F5F9;margin-bottom:4px">Instalar DriveIQ</div>
+        <div style="font-size:11px;color:#94A3B8;line-height:1.5">
+          Toca <b style="color:#F5A623">⋮ Menú</b> en Chrome →<br>
+          <b style="color:#F5A623">"Agregar a pantalla de inicio"</b>
+        </div>
+      </div>
+      <button id="driveiq-dismiss" style="background:none;border:none;color:#475569;font-size:22px;cursor:pointer;padding:4px;flex-shrink:0">✕</button>`;
+  }
+
+  document.body.appendChild(b);
+
+  const installBtn = document.getElementById('driveiq-install-btn');
+  if (installBtn) {
+    installBtn.onclick = () => {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(choice => {
+        b.remove();
+        deferredPrompt = null;
+      });
+    };
+  }
+  document.getElementById('driveiq-dismiss').onclick = () => b.remove();
+}
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Show immediately if page already loaded, else wait a bit
+  if (document.readyState === 'complete') {
+    setTimeout(showInstallBanner, 2500);
+  } else {
+    window.addEventListener('load', () => setTimeout(showInstallBanner, 2500));
+  }
+});
+
+// iOS: show after splash
+window.addEventListener('load', () => {
+  if (isIOS && !isStandalone) {
+    setTimeout(showInstallBanner, 3500);
+  }
+});
+
+// Expose global so React can trigger it from a button inside the app
+window.showDriveIQInstall = showInstallBanner;
+</script>
+
+<!-- React + Babel -->
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useCallback, useRef } = React;
+
+// ═══════════════════════════════════════════════════════════════
+//  DRIVEIQ — CARTAGENA DE INDIAS  ·  v3 PWA + Sincronización
+// ═══════════════════════════════════════════════════════════════
+
+// ── Cross-device Sync Engine ──────────────────────────────────────────────
+// Uses the Claude Artifacts storage API (shared=true) keyed by a user PIN.
+// All data is namespaced under the PIN so each driver has their own space.
+
+async function syncPush(pin, trips, expenses) {
+  try {
+    const payload = JSON.stringify({ trips, expenses, ts: Date.now(), v: 3 });
+    await window.storage.set('driveiq_' + pin, payload, true);
+    return true;
+  } catch(e) { return false; }
+}
+
+async function syncPull(pin) {
+  try {
+    const result = await window.storage.get('driveiq_' + pin, true);
+    if (!result) return null;
+    return JSON.parse(result.value);
+  } catch(e) { return null; }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+
+
+// ============================================================
+// CONSTANTS & DATA
+// ============================================================
+const PLATFORMS = [
+  { id: "uber",     name: "Uber",     color: "#FFFFFF", bg: "#111111" },
+  { id: "indriver", name: "inDriver", color: "#00D26A", bg: "#00D26A" },
+  { id: "didi",     name: "DiDi",     color: "#FF6633", bg: "#FF6633" },
+];
+
+// ── BYD Yuan UP — Cartagena 2025 ──────────────────────────
+const KWH_PRICE_COP   = 907;          // COP/kWh — Air-e Cartagena 2025
+const KWH_PER_100KM   = 13.0;          // kWh/100km consumo real urbano
+const BATTERY_KWH     = 45.0;           // kWh batería Blade LFP
+const REAL_RANGE_KM   = 310;            // km autonomía real urbana
+const COST_PER_KM = KWH_PRICE_COP * KWH_PER_100KM / 100; // ≈ $118 COP/km
+
+const ZONES_DATA = [
+  { name: "Bocagrande / Castillogrande", peak: ["07:00–09:00", "17:00–20:00", "22:00–01:00"], type: "Hoteles + Turismo + Rumba", demand: 98 },
+  { name: "Aeropuerto Rafael Núñez", peak: ["04:30–07:00", "11:00–13:00", "18:00–21:00"], type: "Viajeros — tarifas altas", demand: 95 },
+  { name: "El Laguito / Marbella", peak: ["08:00–10:00", "18:00–21:00"], type: "Residencial premium + restaurantes", demand: 88 },
+  { name: "Centro Histórico / Getsemaní", peak: ["09:00–12:00", "19:00–23:00"], type: "Turismo + vida nocturna", demand: 85 },
+  { name: "Manga / Crespo", peak: ["07:00–09:00", "17:00–19:30"], type: "Oficinas + residencial", demand: 75 },
+  { name: "Pie de la Popa / Zaragocilla", peak: ["06:30–08:30", "12:00–14:00", "17:00–19:00"], type: "Universidades + comercio", demand: 70 },
+  { name: "Ternera / Villa Country", peak: ["07:00–09:00", "17:30–20:00"], type: "Zona norte residencial", demand: 65 },
+  { name: "La Boquilla / Zona Norte", peak: ["10:00–14:00", "18:00–22:00"], type: "Playas + turismo fin de semana", demand: 60 },
+];
+
+const INITIAL_STATE = {
+  trips: [],
+  expenses: [],
+  activeTab: "dashboard",
+  showAddTrip: false,
+  showAddExpense: false,
+  aiAnalysis: null,
+  aiLoading: false,
+  aiError: null,
+  tripForm: { platform: "uber", fare: "", km: "", minutes: "", tip: "", notes: "" },
+  expenseForm: { type: "carga", amount: "", description: "" },
+  filterDays: 7,
+};
+
+// ============================================================
+// HELPERS
+// ============================================================
+function fmt(n) {
+  return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
+}
+function fmtNum(n, dec = 1) {
+  return Number(n).toFixed(dec);
+}
+function getPlatform(id) {
+  return PLATFORMS.find((p) => p.id === id) || PLATFORMS[PLATFORMS.length - 1];
+}
+function getDateStr(d) {
+  return new Date(d).toLocaleDateString("es-CO", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+function calcTripProfit(trip) {
+  const fuelCost = (trip.km || 0) * COST_PER_KM;
+  const income = (trip.fare || 0) + (trip.tip || 0);
+  return income - fuelCost;
+}
+function calcEfficiency(trip) {
+  if (!trip.minutes || trip.minutes === 0) return 0;
+  return ((trip.fare + (trip.tip || 0)) / trip.minutes) * 60;
+}
+function getLastNDays(trips, n) {
+  const cutoff = Date.now() - n * 86400000;
+  return trips.filter((t) => t.timestamp >= cutoff);
+}
+function groupByPlatform(trips) {
+  return PLATFORMS.map((p) => {
+    const pts = trips.filter((t) => t.platform === p.id);
+    const income = pts.reduce((s, t) => s + t.fare + (t.tip || 0), 0);
+    const km = pts.reduce((s, t) => s + (t.km || 0), 0);
+    const fuel = km * COST_PER_KM;
+    const net = income - fuel;
+    const avgEff = pts.length > 0 ? pts.reduce((s, t) => s + calcEfficiency(t), 0) / pts.length : 0;
+    return { ...p, count: pts.length, income, km, fuel, net, avgEff };
+  }).filter((p) => p.count > 0);
+}
+
+// ============================================================
+// SUB-COMPONENTS
+// ============================================================
+function StatCard({ label, value, sub, accent }) {
+  return (
+    <div style={{
+      background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
+      borderRadius: 16, padding: "18px 20px", position: "relative", overflow: "hidden"
+    }}>
+      <div style={{
+        position: "absolute", top: 0, left: 0, width: 3, height: "100%",
+        background: accent || "#F5A623", borderRadius: "4px 0 0 4px"
+      }} />
+      <div style={{ fontSize: 11, color: "#94A3B8", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: 22, fontWeight: 800, color: "#F1F5F9", fontFamily: "'Space Mono', monospace" }}>{value}</div>
+      {sub && <div style={{ fontSize: 12, color: "#64748B", marginTop: 4 }}>{sub}</div>}
+    </div>
+  );
+}
+
+function PlatformBadge({ id, size = "sm" }) {
+  const p = getPlatform(id);
+  const sz = size === "sm" ? { fontSize: 10, padding: "2px 8px", borderRadius: 20 } : { fontSize: 13, padding: "4px 12px", borderRadius: 20 };
+  return (
+    <span style={{ background: p.bg, color: "#fff", fontWeight: 700, ...sz, display: "inline-block" }}>
+      {p.name}
+    </span>
+  );
+}
+
+function TripRow({ trip, onDelete }) {
+  const profit = calcTripProfit(trip);
+  const eff = calcEfficiency(trip);
+  const isGood = profit > 8000;
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 12, padding: "12px 16px",
+      background: "rgba(255,255,255,0.03)", borderRadius: 12, marginBottom: 6,
+      border: `1px solid ${isGood ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.06)"}`,
+    }}>
+      <div style={{ flex: 1 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+          <PlatformBadge id={trip.platform} />
+          <span style={{ fontSize: 11, color: "#64748B" }}>{getDateStr(trip.timestamp)}</span>
+        </div>
+        <div style={{ display: "flex", gap: 16, fontSize: 12, color: "#94A3B8" }}>
+          <span>💰 {fmt(trip.fare + (trip.tip || 0))}</span>
+          {trip.km > 0 && <span>📍 {trip.km} km</span>}
+          {trip.minutes > 0 && <span>⏱ {trip.minutes} min</span>}
+          {eff > 0 && <span style={{ color: eff >= 30000 ? "#4ADE80" : "#F59E0B" }}>⚡ {fmt(eff)}/h</span>}
+        </div>
+      </div>
+      <div style={{ textAlign: "right" }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: profit > 0 ? "#4ADE80" : "#F87171" }}>
+          {fmt(profit)}
+        </div>
+        <div style={{ fontSize: 10, color: "#475569" }}>utilidad</div>
+      </div>
+      <button onClick={() => onDelete(trip.id)} style={{
+        background: "rgba(239,68,68,0.1)", border: "none", borderRadius: 8,
+        color: "#F87171", cursor: "pointer", padding: "6px 10px", fontSize: 14
+      }}>✕</button>
+    </div>
+  );
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function Dashboard({ trips, expenses, filterDays, setFilterDays }) {
+  const filtered = getLastNDays(trips, filterDays);
+  const totalIncome = filtered.reduce((s, t) => s + t.fare + (t.tip || 0), 0);
+  const totalKm = filtered.reduce((s, t) => s + (t.km || 0), 0);
+  const fuelCost = totalKm * COST_PER_KM;
+  const expCost = getLastNDays(expenses, filterDays).reduce((s, e) => s + e.amount, 0);
+  const netProfit = totalIncome - fuelCost - expCost;
+  const avgPerTrip = filtered.length > 0 ? totalIncome / filtered.length : 0;
+  const byPlatform = groupByPlatform(filtered);
+  const bestPlatform = byPlatform.sort((a, b) => b.avgEff - a.avgEff)[0];
+
+  return (
+    <div>
+      {/* Filter bar */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+        {[7, 15, 30].map(d => (
+          <button key={d} onClick={() => setFilterDays(d)} style={{
+            padding: "6px 16px", borderRadius: 20, fontSize: 12, fontWeight: 600,
+            border: `1px solid ${filterDays === d ? "#F5A623" : "rgba(255,255,255,0.1)"}`,
+            background: filterDays === d ? "rgba(245,166,35,0.15)" : "transparent",
+            color: filterDays === d ? "#F5A623" : "#64748B", cursor: "pointer"
+          }}>
+            {d} días
+          </button>
+        ))}
+      </div>
+
+      {/* KPI grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
+        <StatCard label="Ingreso Bruto" value={fmt(totalIncome)} sub={`${filtered.length} viajes`} accent="#F5A623" />
+        <StatCard label="Utilidad Neta" value={fmt(netProfit)} sub={`${fmt(fuelCost)} en combustible`} accent={netProfit > 0 ? "#4ADE80" : "#F87171"} />
+        <StatCard label="Promedio / Viaje" value={fmt(avgPerTrip)} sub={`${fmtNum(totalKm)} km totales`} accent="#60A5FA" />
+        <StatCard label="Costo eléctrico/km" value={fmt(COST_PER_KM)} sub={`⚡ ${KWH_PER_100KM} kWh/100km · $${KWH_PRICE_COP}/kWh`} accent="#4ADE80" />
+      </div>
+
+      {/* Best platform */}
+      {bestPlatform && (
+        <div style={{
+          background: "linear-gradient(135deg, rgba(245,166,35,0.12) 0%, rgba(245,166,35,0.04) 100%)",
+          border: "1px solid rgba(245,166,35,0.25)", borderRadius: 16, padding: 16, marginBottom: 20
+        }}>
+          <div style={{ fontSize: 11, color: "#F5A623", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>
+            ⭐ Plataforma más rentable hoy
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <PlatformBadge id={bestPlatform.id} size="lg" />
+            <div>
+              <span style={{ fontSize: 18, fontWeight: 800, color: "#F1F5F9", fontFamily: "monospace" }}>
+                {fmt(bestPlatform.avgEff)}/hora
+              </span>
+              <span style={{ fontSize: 12, color: "#64748B", marginLeft: 8 }}>promedio</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Platform breakdown */}
+      {byPlatform.length > 0 && (
+        <div>
+          <div style={{ fontSize: 12, color: "#64748B", marginBottom: 12, textTransform: "uppercase", letterSpacing: 1 }}>Desglose por plataforma</div>
+          {byPlatform.map(p => (
+            <div key={p.id} style={{
+              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)",
+              borderRadius: 12, padding: "12px 16px", marginBottom: 8
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <PlatformBadge id={p.id} />
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#4ADE80" }}>{fmt(p.net)} neto</span>
+              </div>
+              <div style={{ display: "flex", gap: 16, fontSize: 11, color: "#64748B" }}>
+                <span>{p.count} viajes</span>
+                <span>{fmt(p.income)} bruto</span>
+                <span>{fmtNum(p.km)} km</span>
+                <span>⚡ {fmt(p.avgEff)}/h</span>
+              </div>
+              <div style={{ marginTop: 8, background: "rgba(255,255,255,0.05)", borderRadius: 4, height: 4 }}>
+                <div style={{
+                  height: 4, borderRadius: 4, width: `${Math.min(100, (p.avgEff / 60000) * 100)}%`,
+                  background: p.bg, transition: "width 0.5s"
+                }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {filtered.length === 0 && (
+        <div style={{ textAlign: "center", padding: 40, color: "#475569" }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>🚗</div>
+          <div style={{ fontSize: 14 }}>No hay viajes en los últimos {filterDays} días</div>
+          <div style={{ fontSize: 12, marginTop: 4 }}>Agrega tu primer viaje usando el botón "+"</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TripLog({ trips, onDelete }) {
+  const sorted = [...trips].sort((a, b) => b.timestamp - a.timestamp);
+  return (
+    <div>
+      <div style={{ fontSize: 12, color: "#64748B", marginBottom: 16, textTransform: "uppercase", letterSpacing: 1 }}>
+        {trips.length} viajes registrados
+      </div>
+      {sorted.length === 0 ? (
+        <div style={{ textAlign: "center", padding: 40, color: "#475569" }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>📋</div>
+          <div style={{ fontSize: 14 }}>Sin viajes registrados aún</div>
+        </div>
+      ) : (
+        sorted.map(t => <TripRow key={t.id} trip={t} onDelete={onDelete} />)
+      )}
+    </div>
+  );
+}
+
+function Zones() {
+  return (
+    <div>
+      <div style={{
+        background: "rgba(245,166,35,0.08)", border: "1px solid rgba(245,166,35,0.2)",
+        borderRadius: 12, padding: 14, marginBottom: 20, fontSize: 12, color: "#94A3B8"
+      }}>
+        💡 Zonas de alta demanda en Cartagena de Indias — Patrones históricos de conductores locales
+      </div>
+      {ZONES_DATA.map((z, i) => (
+        <div key={i} style={{
+          background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)",
+          borderRadius: 14, padding: 16, marginBottom: 10
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+            <div>
+              <div style={{ fontWeight: 700, color: "#F1F5F9", fontSize: 14 }}>{z.name}</div>
+              <div style={{ fontSize: 11, color: "#64748B", marginTop: 2 }}>{z.type}</div>
+            </div>
+            <div style={{
+              fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: 20,
+              background: z.demand >= 90 ? "rgba(239,68,68,0.15)" : z.demand >= 80 ? "rgba(245,166,35,0.15)" : "rgba(99,102,241,0.15)",
+              color: z.demand >= 90 ? "#F87171" : z.demand >= 80 ? "#F5A623" : "#818CF8"
+            }}>
+              {z.demand}% demanda
+            </div>
+          </div>
+          <div style={{ marginBottom: 8, background: "rgba(255,255,255,0.05)", borderRadius: 4, height: 4 }}>
+            <div style={{
+              height: 4, borderRadius: 4, width: `${z.demand}%`,
+              background: z.demand >= 90 ? "#F87171" : z.demand >= 80 ? "#F5A623" : "#818CF8"
+            }} />
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {z.peak.map((h, j) => (
+              <span key={j} style={{
+                fontSize: 11, background: "rgba(96,165,250,0.12)", color: "#60A5FA",
+                padding: "2px 8px", borderRadius: 8, border: "1px solid rgba(96,165,250,0.2)"
+              }}>⏰ {h}</span>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+
+
+// ============================================================
+// QUICK DECIDE ENGINE v2 — GUARD MODE + VIBRATION + CONTINUOUS VOICE + OVERLAY
+// ============================================================
+const PRESETS = [
+  { label: "Viaje corto", fare: 9000, km: 3, min: 10 },
+  { label: "Media ciudad", fare: 15000, km: 7, min: 20 },
+  { label: "Viaje largo", fare: 28000, km: 15, min: 35 },
+  { label: "Aeropuerto", fare: 45000, km: 22, min: 45 },
+];
+
+// --- Audio feedback ---
+function playTone(type) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    if (type === "good") {
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(440, ctx.currentTime);
+      osc.frequency.setValueAtTime(554, ctx.currentTime + 0.08);
+      osc.frequency.setValueAtTime(659, ctx.currentTime + 0.16);
+      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.24);
+      gain.gain.setValueAtTime(0.4, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+      osc.start(); osc.stop(ctx.currentTime + 0.6);
+    } else if (type === "marginal") {
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(330, ctx.currentTime);
+      osc.frequency.setValueAtTime(370, ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+      osc.start(); osc.stop(ctx.currentTime + 0.4);
+    } else {
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(220, ctx.currentTime);
+      osc.frequency.setValueAtTime(180, ctx.currentTime + 0.12);
+      osc.frequency.setValueAtTime(150, ctx.currentTime + 0.24);
+      gain.gain.setValueAtTime(0.35, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+      osc.start(); osc.stop(ctx.currentTime + 0.5);
+    }
+  } catch(e) {}
+}
+
+// --- Vibration feedback ---
+function vibrate(pattern) {
+  try { if (navigator.vibrate) navigator.vibrate(pattern); } catch(e) {}
+}
+
+// --- Core calculation (tarifa + km únicamente) ---
+function evaluate(fare, km) {
+  const f = parseFloat(fare) || 0;
+  const k = parseFloat(km) || 0;
+  const energyCost = k * COST_PER_KM; const fuelCost = energyCost;
+  const net = f - fuelCost;
+  const effPerKm = k > 0 ? f / k : 0;
+  // Acepta si COP/km >= 2.2x costo combustible Y utilidad >= 5000
+  const isGood = effPerKm >= COST_PER_KM * 2.2 && net >= 5000;
+  const isMarginal = !isGood && effPerKm >= COST_PER_KM * 1.5 && net >= 2000;
+  return { net, effPerKm, fuelCost, isGood, isMarginal, f, k };
+}
+
+// ── Battery Widget — BYD Yuan UP ─────────────────────────────────────────
+function BatteryWidget() {
+  const [pct, setPct] = useState(() => {
+    try { return parseInt(localStorage.getItem("driveiq_batt") || "80"); } catch(e) { return 80; }
+  });
+  const kmLeft = Math.round((pct / 100) * REAL_RANGE_KM);
+  const chargeCost = Math.round((BATTERY_KWH * (1 - pct / 100)) * KWH_PRICE_COP);
+  const color = pct >= 50 ? "#4ADE80" : pct >= 25 ? "#F59E0B" : "#F87171";
+
+  function update(val) {
+    setPct(val);
+    try { localStorage.setItem("driveiq_batt", String(val)); } catch(e) {}
+  }
+
+  return (
+    <div style={{
+      padding: "0 20px", marginBottom: 16
+    }}>
+      <div style={{
+        background: "rgba(255,255,255,0.02)", border: `1px solid ${color}22`,
+        borderRadius: 14, padding: "12px 14px"
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 16 }}>🔋</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: "#94A3B8" }}>BYD Yuan UP</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: 20, fontWeight: 900, color, fontFamily: "monospace" }}>{pct}%</span>
+            <span style={{ fontSize: 11, color: "#475569" }}>·</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#60A5FA" }}>{kmLeft} km</span>
+          </div>
+        </div>
+
+        {/* Battery bar */}
+        <div style={{ position: "relative", marginBottom: 10 }}>
+          <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: 8, height: 18, overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <div style={{
+              height: "100%", borderRadius: 7,
+              width: `${pct}%`,
+              background: pct >= 50
+                ? "linear-gradient(90deg, #166534, #4ADE80)"
+                : pct >= 25
+                ? "linear-gradient(90deg, #78350F, #F59E0B)"
+                : "linear-gradient(90deg, #7F1D1D, #F87171)",
+              transition: "width 0.4s ease, background 0.4s ease",
+              display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 6
+            }}>
+              {pct > 15 && <span style={{ fontSize: 9, fontWeight: 800, color: "rgba(255,255,255,0.8)" }}>⚡</span>}
+            </div>
+          </div>
+          {/* 25% and 50% markers */}
+          {[25, 50, 75].map(m => (
+            <div key={m} style={{
+              position: "absolute", top: 0, left: `${m}%`,
+              width: 1, height: 18, background: "rgba(255,255,255,0.12)"
+            }} />
+          ))}
+        </div>
+
+        {/* Slider */}
+        <input type="range" min="5" max="100" step="5" value={pct}
+          onChange={e => update(parseInt(e.target.value))}
+          style={{ width: "100%", accentColor: color, cursor: "pointer", marginBottom: 8 }}
+        />
+
+        {/* Info row */}
+        <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ flex: 1, background: "rgba(0,0,0,0.2)", borderRadius: 8, padding: "6px 10px", textAlign: "center" }}>
+            <div style={{ fontSize: 9, color: "#475569", textTransform: "uppercase", letterSpacing: 0.5 }}>Costo cargar al 100%</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: "#4ADE80", fontFamily: "monospace" }}>
+              {new Intl.NumberFormat("es-CO",{style:"currency",currency:"COP",maximumFractionDigits:0}).format(chargeCost)}
+            </div>
+          </div>
+          <div style={{ flex: 1, background: "rgba(0,0,0,0.2)", borderRadius: 8, padding: "6px 10px", textAlign: "center" }}>
+            <div style={{ fontSize: 9, color: "#475569", textTransform: "uppercase", letterSpacing: 0.5 }}>Costo por km hoy</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: "#4ADE80", fontFamily: "monospace" }}>
+              {new Intl.NumberFormat("es-CO",{style:"currency",currency:"COP",maximumFractionDigits:0}).format(Math.round(COST_PER_KM))}/km
+            </div>
+          </div>
+        </div>
+
+        {pct <= 20 && (
+          <div style={{
+            marginTop: 8, padding: "6px 10px", borderRadius: 8,
+            background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)",
+            fontSize: 11, color: "#F87171", textAlign: "center", fontWeight: 600
+          }}>
+            ⚠️ Batería baja — recarga antes de continuar ({kmLeft} km restantes)
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// --- Verdict display (shared between normal and overlay) ---
+function VerdictCard({ result, onReset, compact = false }) {
+  const color = result.isGood ? "#4ADE80" : result.isMarginal ? "#F59E0B" : "#F87171";
+  const bg = result.isGood
+    ? "linear-gradient(135deg, rgba(34,197,94,0.18), rgba(34,197,94,0.06))"
+    : result.isMarginal
+    ? "linear-gradient(135deg, rgba(245,158,11,0.18), rgba(245,158,11,0.06))"
+    : "linear-gradient(135deg, rgba(239,68,68,0.18), rgba(239,68,68,0.06))";
+  const label = result.isGood ? "ACEPTA" : result.isMarginal ? "MARGINAL" : "RECHAZA";
+  const sub = result.isGood ? "Viaje rentable ✓" : result.isMarginal ? "Solo si no hay más" : "No cubre costos";
+
+  return (
+    <div style={{
+      borderRadius: compact ? 16 : 20, padding: compact ? 14 : 20,
+      background: bg, border: `2px solid ${color}`,
+      animation: "verdictIn 0.25s cubic-bezier(0.34,1.56,0.64,1)"
+    }}>
+      <div style={{ textAlign: "center", marginBottom: compact ? 10 : 14 }}>
+        <div style={{ fontSize: compact ? 40 : 56, lineHeight: 1 }}>
+          {result.isGood ? "✅" : result.isMarginal ? "⚠️" : "❌"}
+        </div>
+        <div style={{
+          fontSize: compact ? 22 : 30, fontWeight: 900,
+          fontFamily: "'Space Mono', monospace", marginTop: 4,
+          color, letterSpacing: -1
+        }}>{label}</div>
+        {!compact && <div style={{ fontSize: 12, color: "#64748B", marginTop: 3 }}>{sub}</div>}
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: compact ? 6 : 8, marginBottom: compact ? 10 : 14 }}>
+        {[
+          { label: "Utilidad neta", val: fmt(result.net), c: result.net > 0 ? "#4ADE80" : "#F87171" },
+          { label: "Costo energía", val: fmt(result.fuelCost), c: "#4ADE80" },
+          { label: "COP / km", val: fmt(result.effPerKm), c: result.effPerKm >= COST_PER_KM * 2.2 ? "#4ADE80" : "#F59E0B" },
+        ].map((s, i) => (
+          <div key={i} style={{ background: "rgba(0,0,0,0.25)", borderRadius: 10, padding: compact ? "7px 10px" : "10px 12px" }}>
+            <div style={{ fontSize: 9, color: "#64748B", textTransform: "uppercase", letterSpacing: 0.5 }}>{s.label}</div>
+            <div style={{ fontSize: compact ? 13 : 16, fontWeight: 800, color: s.c, fontFamily: "monospace", marginTop: 1 }}>{s.val}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* COP/km efficiency bar */}
+      <div style={{ marginBottom: 10 }}>
+        <div style={{ background: "rgba(255,255,255,0.07)", borderRadius: 6, height: 6, position: "relative", overflow: "hidden" }}>
+          <div style={{
+            height: 6, borderRadius: 6,
+            width: `${Math.min(100, (result.effPerKm / (COST_PER_KM * 4)) * 100)}%`,
+            background: `linear-gradient(90deg, ${color}88, ${color})`,
+            transition: "width 0.5s ease"
+          }} />
+          <div style={{ position: "absolute", top: 0, left: `${(1 / 4) * 100}%`, width: 2, height: 6, background: "rgba(255,255,255,0.5)" }} />
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: "#475569", marginTop: 3 }}>
+          <span>0</span>
+          <span style={{color:"#4ADE80"}}>Meta: {fmt(Math.round(COST_PER_KM * 2.2))}/km</span>
+          <span>{fmt(Math.round(COST_PER_KM * 4))}/km</span>
+        </div>
+      </div>
+
+      <button onClick={onReset} style={{
+        width: "100%", padding: compact ? 9 : 12, borderRadius: 10, fontWeight: 700,
+        fontSize: compact ? 12 : 13, background: "rgba(255,255,255,0.07)",
+        border: "1px solid rgba(255,255,255,0.1)", color: "#94A3B8", cursor: "pointer"
+      }}>
+        Nuevo viaje →
+      </button>
+    </div>
+  );
+}
+
+// --- Floating Overlay (Picture-in-Picture style) ---
+function FloatingOverlay({ onClose }) {
+  const [fare, setFare] = useState("");
+  const [km, setKm] = useState("");
+  const [step, setStep] = useState(0); // 0=fare,1=km
+  const [result, setResult] = useState(null);
+  const [pos, setPos] = useState({ x: 16, y: 80 });
+  const [dragging, setDragging] = useState(false);
+  const dragStart = useRef(null);
+  const overlayRef = useRef(null);
+
+  const fields = [
+    { key: "fare", val: fare, set: setFare, label: "Tarifa", color: "#F5A623", unit: "$" },
+    { key: "km",   val: km,   set: setKm,   label: "Km",     color: "#60A5FA", unit: "km" },
+  ];
+
+  function onPointerDown(e) {
+    if (e.target.closest("button") && !e.target.closest(".drag-handle")) return;
+    setDragging(true);
+    dragStart.current = { mx: e.clientX, my: e.clientY, ox: pos.x, oy: pos.y };
+    e.preventDefault();
+  }
+  function onPointerMove(e) {
+    if (!dragging || !dragStart.current) return;
+    setPos({
+      x: Math.max(0, Math.min(window.innerWidth - 220, dragStart.current.ox + e.clientX - dragStart.current.mx)),
+      y: Math.max(0, Math.min(window.innerHeight - 300, dragStart.current.oy + e.clientY - dragStart.current.my)),
+    });
+  }
+  function onPointerUp() { setDragging(false); }
+
+  useEffect(() => {
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+    };
+  }, [dragging]);
+
+  function pressKey(d) {
+    const cur = fields[step];
+    if (d === "⌫") { cur.set(v => v.slice(0, -1)); return; }
+    if (cur.val.length >= 5) return;
+    cur.set(v => v + d);
+  }
+  function advance() {
+    if (step < 1) { setStep(s => s + 1); }
+    else {
+      const r = evaluate(fare, km);
+      setResult(r);
+      playTone(r.isGood ? "good" : r.isMarginal ? "marginal" : "bad");
+      vibrate(r.isGood ? [50, 30, 50] : r.isMarginal ? [100] : [200, 50, 200]);
+    }
+  }
+  function reset() { setFare(""); setKm(""); setResult(null); setStep(0); }
+
+  const digits = ["1","2","3","4","5","6","7","8","9","⌫","0","→"];
+  const curF = fields[step];
+
+  return (
+    <div
+      ref={overlayRef}
+      onPointerDown={onPointerDown}
+      style={{
+        position: "fixed", left: pos.x, top: pos.y, zIndex: 9999,
+        width: 210, background: "rgba(7,11,20,0.97)",
+        border: "1.5px solid rgba(245,166,35,0.5)",
+        borderRadius: 18, boxShadow: "0 8px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(245,166,35,0.1)",
+        userSelect: "none", touchAction: "none",
+        backdropFilter: "blur(12px)"
+      }}
+    >
+      {/* Handle */}
+      <div className="drag-handle" style={{
+        display: "flex", justifyContent: "space-between", alignItems: "center",
+        padding: "8px 12px 6px",
+        borderBottom: "1px solid rgba(255,255,255,0.07)", cursor: "grab"
+      }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: "#F5A623" }}>⚡ DriveIQ</span>
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          <div style={{ width: 24, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 2 }} />
+          <button onClick={onClose} style={{
+            background: "rgba(239,68,68,0.2)", border: "none", borderRadius: 6,
+            color: "#F87171", cursor: "pointer", padding: "2px 7px", fontSize: 12, fontWeight: 700
+          }}>✕</button>
+        </div>
+      </div>
+
+      <div style={{ padding: "10px 10px 12px" }}>
+        {result ? (
+          <VerdictCard result={result} onReset={reset} compact />
+        ) : (
+          <>
+            {/* Field tabs */}
+            <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
+              {fields.map((f, i) => (
+                <button key={i} onClick={() => setStep(i)} style={{
+                  flex: 1, padding: "6px 4px", borderRadius: 8, fontSize: 10, fontWeight: 700,
+                  border: `1.5px solid ${step === i ? f.color : "rgba(255,255,255,0.08)"}`,
+                  background: step === i ? `${f.color}18` : "transparent",
+                  color: f.val ? f.color : step === i ? f.color : "#475569",
+                  cursor: "pointer", textAlign: "center"
+                }}>
+                  <div style={{ fontSize: 9, opacity: 0.7, marginBottom: 1 }}>{f.label}</div>
+                  <div style={{ fontFamily: "monospace", fontSize: 13 }}>{f.val || "—"}{f.val ? f.unit : ""}</div>
+                </button>
+              ))}
+            </div>
+
+            {/* Active field value */}
+            <div style={{
+              background: `${curF.color}11`, border: `1px solid ${curF.color}44`,
+              borderRadius: 10, padding: "8px 12px", marginBottom: 8, textAlign: "center"
+            }}>
+              <span style={{ fontSize: 26, fontWeight: 900, fontFamily: "monospace", color: curF.color }}>
+                {curF.val || "0"}
+              </span>
+              <span style={{ fontSize: 12, color: "#475569", marginLeft: 4 }}>{curF.unit}</span>
+            </div>
+
+            {/* Compact numpad */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 4 }}>
+              {digits.map((d, i) => (
+                <button key={i} onClick={() => d === "→" ? advance() : pressKey(d)} style={{
+                  padding: "11px 4px", borderRadius: 9, fontSize: d === "→" ? 16 : 17, fontWeight: 700,
+                  border: `1px solid ${d === "→" ? curF.color + "55" : "rgba(255,255,255,0.08)"}`,
+                  background: d === "→" ? `${curF.color}22` : d === "⌫" ? "rgba(239,68,68,0.08)" : "rgba(255,255,255,0.04)",
+                  color: d === "→" ? curF.color : d === "⌫" ? "#F87171" : "#E2E8F0",
+                  cursor: "pointer", fontFamily: "monospace"
+                }}>
+                  {d === "→" ? (step < 1 ? "→" : "⚡") : d}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// --- Guard Mode: continuous voice listener ---
+function useGuardMode(onResult) {
+  const recRef = useRef(null);
+  const [active, setActive] = useState(false);
+  const [lastText, setLastText] = useState("");
+
+  function startGuard() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return false;
+    function listen() {
+      const rec = new SR();
+      rec.lang = "es-CO";
+      rec.continuous = false;
+      rec.interimResults = false;
+      rec.onresult = (e) => {
+        const text = e.results[0][0].transcript.toLowerCase();
+        setLastText(text);
+        const nums = text.match(/\d+\.?\d*/g);
+        if (nums && nums.length >= 2) {
+          const r = evaluate(nums[0], nums[1]);
+          onResult(r, { fare: nums[0], km: nums[1] });
+          playTone(r.isGood ? "good" : r.isMarginal ? "marginal" : "bad");
+          vibrate(r.isGood ? [50, 30, 50] : r.isMarginal ? [100] : [200, 50, 200]);
+        }
+      };
+      rec.onend = () => { if (recRef.current === rec) setTimeout(listen, 800); };
+      rec.onerror = () => { if (recRef.current === rec) setTimeout(listen, 1500); };
+      recRef.current = rec;
+      try { rec.start(); } catch(e) {}
+    }
+    setActive(true);
+    listen();
+    return true;
+  }
+
+  function stopGuard() {
+    if (recRef.current) { try { recRef.current.onend = null; recRef.current.stop(); } catch(e) {} recRef.current = null; }
+    setActive(false);
+    setLastText("");
+  }
+
+  return { active, lastText, startGuard, stopGuard };
+}
+
+// --- Main QuickDecide tab ---
+function QuickDecide() {
+  const [fare, setFare] = useState("");
+  const [km, setKm] = useState("");
+  const [step, setStep] = useState(0);
+  const [result, setResult] = useState(null);
+  const [voiceSupported, setVoiceSupported] = useState(false);
+  const [showOverlay, setShowOverlay] = useState(false);
+
+  const guard = useGuardMode((r, data) => {
+    setFare(data.fare); setKm(data.km);
+    setResult(r);
+  });
+
+  useEffect(() => {
+    setVoiceSupported(!!(window.SpeechRecognition || window.webkitSpeechRecognition));
+  }, []);
+
+  const fields = [
+    { label: "① Tarifa", val: fare, set: setFare, color: "#F5A623", unit: "COP" },
+    { label: "② Km",     val: km,   set: setKm,   color: "#60A5FA", unit: "km"  },
+  ];
+  const curF = fields[step];
+
+  function pressKey(d) {
+    if (d === "⌫") { curF.set(v => v.slice(0,-1)); return; }
+    if (curF.val.length >= 6) return;
+    curF.set(v => v + d);
+  }
+  function advance() {
+    if (step < 1) { setStep(s => s + 1); }
+    else {
+      const r = evaluate(fare, km);
+      setResult(r);
+      playTone(r.isGood ? "good" : r.isMarginal ? "marginal" : "bad");
+      vibrate(r.isGood ? [50, 30, 50] : r.isMarginal ? [100] : [200, 50, 200]);
+    }
+  }
+  function reset() { setFare(""); setKm(""); setResult(null); setStep(0); }
+  function loadPreset(p) {
+    setFare(String(p.fare)); setKm(String(p.km));
+    setStep(0);
+    const r = evaluate(p.fare, p.km);
+    setResult(r);
+    playTone(r.isGood ? "good" : r.isMarginal ? "marginal" : "bad");
+    vibrate(r.isGood ? [50, 30, 50] : r.isMarginal ? [100] : [200, 50, 200]);
+  }
+
+  const digits = ["1","2","3","4","5","6","7","8","9","⌫","0","→"];
+
+  return (
+    <div>
+      {showOverlay && <FloatingOverlay onClose={() => setShowOverlay(false)} />}
+
+      {/* Mode switcher buttons */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 16 }}>
+        {/* Guard mode */}
+        <button onClick={() => guard.active ? guard.stopGuard() : guard.startGuard()} style={{
+          padding: "12px 10px", borderRadius: 14, fontWeight: 700, fontSize: 12,
+          border: `2px solid ${guard.active ? "#4ADE80" : "rgba(255,255,255,0.1)"}`,
+          background: guard.active
+            ? "linear-gradient(135deg, rgba(34,197,94,0.2), rgba(34,197,94,0.06))"
+            : "rgba(255,255,255,0.04)",
+          color: guard.active ? "#4ADE80" : "#64748B", cursor: "pointer",
+          display: "flex", flexDirection: "column", alignItems: "center", gap: 4
+        }}>
+          <span style={{ fontSize: 22, animation: guard.active ? "pulse 1.5s infinite" : "none" }}>
+            {guard.active ? "🎙️" : "🎙️"}
+          </span>
+          <span>{guard.active ? "Guardia ON" : "Modo Guardia"}</span>
+          {guard.active && <span style={{ fontSize: 9, color: "#4ADE80", opacity: 0.8 }}>escuchando...</span>}
+          {!guard.active && <span style={{ fontSize: 9, color: "#475569" }}>Voz continua 24/7</span>}
+        </button>
+
+        {/* Floating overlay */}
+        <button onClick={() => setShowOverlay(v => !v)} style={{
+          padding: "12px 10px", borderRadius: 14, fontWeight: 700, fontSize: 12,
+          border: `2px solid ${showOverlay ? "#F5A623" : "rgba(255,255,255,0.1)"}`,
+          background: showOverlay
+            ? "linear-gradient(135deg, rgba(245,166,35,0.2), rgba(245,166,35,0.06))"
+            : "rgba(255,255,255,0.04)",
+          color: showOverlay ? "#F5A623" : "#64748B", cursor: "pointer",
+          display: "flex", flexDirection: "column", alignItems: "center", gap: 4
+        }}>
+          <span style={{ fontSize: 22 }}>🪟</span>
+          <span>{showOverlay ? "Overlay ON" : "Overlay Flotante"}</span>
+          <span style={{ fontSize: 9, color: "#475569" }}>Mini sobre otras apps</span>
+        </button>
+      </div>
+
+      {/* Guard mode live transcript */}
+      {guard.active && (
+        <div style={{
+          background: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.25)",
+          borderRadius: 12, padding: "10px 14px", marginBottom: 14,
+          display: "flex", alignItems: "center", gap: 10
+        }}>
+          <span style={{ fontSize: 18, animation: "pulse 1s infinite" }}>🟢</span>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#4ADE80" }}>
+              Guardia activo — di tarifa y km, evalúo solo
+            </div>
+            <div style={{ fontSize: 11, color: "#475569", marginTop: 2 }}>
+              {guard.lastText ? `"${guard.lastText}"` : 'Di: "quince mil, siete km"  (tarifa y km)'}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Guard mode result */}
+      {guard.active && result && (
+        <div style={{ marginBottom: 16 }}>
+          <VerdictCard result={result} onReset={() => { setResult(null); setFare(""); setKm(""); setMinutes(""); }} compact={false} />
+        </div>
+      )}
+
+      {!guard.active && (
+        <>
+          {/* Presets */}
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 10, color: "#475569", textTransform: "uppercase", letterSpacing: 1, marginBottom: 7 }}>
+              Perfiles rápidos — 1 toque
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+              {PRESETS.map((p, i) => (
+                <button key={i} onClick={() => loadPreset(p)} style={{
+                  padding: "9px 10px", borderRadius: 11, fontSize: 11, fontWeight: 600,
+                  border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)",
+                  color: "#94A3B8", cursor: "pointer", textAlign: "left"
+                }}>
+                  <div style={{ color: "#E2E8F0", marginBottom: 2 }}>{p.label}</div>
+                  <div style={{ color: "#475569", fontSize: 10 }}>{fmt(p.fare)} · {p.km}km</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 2-field display */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+            {fields.map((f, i) => (
+              <button key={i} onClick={() => setStep(i)} style={{
+                padding: "10px 8px", borderRadius: 12, textAlign: "center",
+                border: `2px solid ${step === i ? f.color : "rgba(255,255,255,0.08)"}`,
+                background: step === i ? `${f.color}14` : "rgba(255,255,255,0.03)",
+                cursor: "pointer"
+              }}>
+                <div style={{ fontSize: 10, color: "#64748B", marginBottom: 3 }}>{f.label}</div>
+                <div style={{ fontSize: 20, fontWeight: 900, color: f.val ? f.color : "#334155", fontFamily: "monospace" }}>
+                  {f.val || "—"}
+                </div>
+                {f.val && <div style={{ fontSize: 9, color: "#475569" }}>{f.unit}</div>}
+              </button>
+            ))}
+          </div>
+
+          {/* Numpad */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 14 }}>
+            {digits.map((d, i) => (
+              <button key={i} onClick={() => d === "→" ? advance() : pressKey(d)} style={{
+                padding: "16px 8px", borderRadius: 12, fontWeight: 700,
+                fontSize: d === "→" ? 20 : 22, fontFamily: "monospace",
+                border: `1px solid ${d === "→" ? curF.color + "55" : "rgba(255,255,255,0.08)"}`,
+                background: d === "→" ? `${curF.color}22` : d === "⌫" ? "rgba(239,68,68,0.09)" : "rgba(255,255,255,0.05)",
+                color: d === "→" ? curF.color : d === "⌫" ? "#F87171" : "#E2E8F0",
+                cursor: "pointer"
+              }}>
+                {d === "→" ? (step < 1 ? "→" : "⚡") : d}
+              </button>
+            ))}
+          </div>
+
+          {/* Result */}
+          {result && <VerdictCard result={result} onReset={reset} />}
+        </>
+      )}
+
+      {/* Vibration info */}
+      <div style={{
+        marginTop: 14, padding: "10px 14px", borderRadius: 10,
+        background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+        fontSize: 11, color: "#334155", display: "flex", gap: 12
+      }}>
+        <span>📳 <b style={{ color: "#475569" }}>Vibración:</b> corta=acepta · larga=rechaza</span>
+      </div>
+    </div>
+  );
+}
+
+function Expenses({ expenses, onDelete }) {
+  const total = expenses.reduce((s, e) => s + e.amount, 0);
+  const byType = {};
+  expenses.forEach(e => { byType[e.type] = (byType[e.type] || 0) + e.amount; });
+  const ICONS = { carga: "⚡", mantenimiento: "🔧", lavado: "🚿", multa: "📄", seguro: "🛡️", llantas: "🔄", otro: "📦" };
+
+  return (
+    <div>
+      <div style={{
+        background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)",
+        borderRadius: 12, padding: 16, marginBottom: 20, textAlign: "center"
+      }}>
+        <div style={{ fontSize: 11, color: "#94A3B8", textTransform: "uppercase", letterSpacing: 1 }}>Total Gastos Registrados</div>
+        <div style={{ fontSize: 28, fontWeight: 800, color: "#F87171", fontFamily: "monospace" }}>{fmt(total)}</div>
+      </div>
+
+      {Object.entries(byType).length > 0 && (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 20 }}>
+          {Object.entries(byType).map(([k, v]) => (
+            <div key={k} style={{ background: "rgba(255,255,255,0.03)", borderRadius: 10, padding: 12 }}>
+              <div style={{ fontSize: 18 }}>{ICONS[k] || "📦"}</div>
+              <div style={{ fontSize: 11, color: "#64748B", textTransform: "capitalize" }}>{k}</div>
+              <div style={{ fontWeight: 700, color: "#F87171", fontSize: 14, fontFamily: "monospace" }}>{fmt(v)}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {expenses.length === 0 ? (
+        <div style={{ textAlign: "center", padding: 40, color: "#475569" }}>
+          <div style={{ fontSize: 40 }}>💸</div>
+          <div style={{ fontSize: 14, marginTop: 8 }}>Sin gastos registrados</div>
+        </div>
+      ) : (
+        [...expenses].sort((a, b) => b.timestamp - a.timestamp).map(e => (
+          <div key={e.id} style={{
+            background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)",
+            borderRadius: 12, padding: "12px 16px", marginBottom: 6,
+            display: "flex", alignItems: "center", justifyContent: "space-between"
+          }}>
+            <div>
+              <div style={{ fontWeight: 600, color: "#F1F5F9", fontSize: 14 }}>
+                {ICONS[e.type] || "📦"} {e.description || e.type}
+              </div>
+              <div style={{ fontSize: 11, color: "#64748B" }}>{getDateStr(e.timestamp)}</div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontWeight: 700, color: "#F87171", fontFamily: "monospace" }}>{fmt(e.amount)}</span>
+              <button onClick={() => onDelete(e.id)} style={{
+                background: "rgba(239,68,68,0.1)", border: "none", borderRadius: 8,
+                color: "#F87171", cursor: "pointer", padding: "5px 8px", fontSize: 13
+              }}>✕</button>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
+function AIAnalysis({ trips, expenses }) {
+  const [analysis, setAnalysis] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  async function runAnalysis() {
+    setLoading(true);
+    setError(null);
+
+    const recent = getLastNDays(trips, 30);
+    const byPlatform = groupByPlatform(recent);
+    const totalIncome = recent.reduce((s, t) => s + t.fare + (t.tip || 0), 0);
+    const totalKm = recent.reduce((s, t) => s + (t.km || 0), 0);
+    const totalExpenses = getLastNDays(expenses, 30).reduce((s, e) => s + e.amount, 0);
+    const netProfit = totalIncome - totalKm * COST_PER_KM - totalExpenses;
+
+    const summary = `
+Soy un conductor de apps de transporte en Cartagena de Indias, Colombia. Manejo un BYD Yuan UP eléctrico (batería 45kWh, consumo real ~13kWh/100km, costo energético ~$118 COP/km con tarifa Air-e de $907/kWh). NO pago gasolina. Aquí están mis datos de los últimos 30 días:
+- Viajes realizados: ${recent.length}
+- Ingreso bruto: $${Math.round(totalIncome).toLocaleString("es-CO")} COP
+- Kilómetros conducidos: ${Math.round(totalKm)} km
+- Gastos adicionales: $${Math.round(totalExpenses).toLocaleString("es-CO")} COP
+- Utilidad neta estimada: $${Math.round(netProfit).toLocaleString("es-CO")} COP
+- Plataformas usadas: ${byPlatform.map(p => `${p.name} (${p.count} viajes, ${Math.round(p.avgEff / 1000)}k COP/h promedio)`).join(", ") || "Ninguna registrada aún"}
+${recent.length === 0 ? "NOTA: No hay viajes aún, dame recomendaciones generales para maximizar ganancias en Colombia." : ""}
+
+Por favor analiza mis datos y dame:
+1. Un diagnóstico claro de mi situación actual (2-3 frases)
+2. Las 3 recomendaciones más importantes y accionables para aumentar mis ganancias EN COLOMBIA específicamente
+3. Qué plataforma debería priorizar y por qué
+4. Un tip práctico sobre horarios o zonas de CARTAGENA específicamente (Bocagrande, aeropuerto, temporada alta turística, etc.)
+5. Una meta realista de ingreso mensual para los próximos 30 días
+
+Responde en español, de forma directa y práctica. Formato: usa emojis para separar secciones. TEN EN CUENTA que manejo vehículo ELÉCTRICO BYD — mi costo por km es ~$118 COP (vs ~$891 de gasolina). Analiza mi ventaja competitiva real. Sé MUY específico para Cartagena: menciona zonas reales, temporadas turísticas, eventos como el Festival de Cine o Hay Festival, y las plataformas que más se usan allá.
+    `;
+
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          messages: [{ role: "user", content: summary }],
+        }),
+      });
+      const data = await res.json();
+      const text = data.content?.map(c => c.text || "").join("") || "Sin respuesta";
+      setAnalysis(text);
+    } catch (err) {
+      setError("No se pudo conectar con el análisis de IA. Verifica tu conexión.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div>
+      <div style={{
+        background: "rgba(167,139,250,0.08)", border: "1px solid rgba(167,139,250,0.2)",
+        borderRadius: 12, padding: 14, marginBottom: 20, fontSize: 12, color: "#94A3B8"
+      }}>
+        🤖 La IA analiza tus datos reales y genera recomendaciones personalizadas para conductores colombianos.
+      </div>
+
+      <button onClick={runAnalysis} disabled={loading} style={{
+        width: "100%", padding: 16, borderRadius: 14, fontWeight: 700, fontSize: 15,
+        background: loading ? "rgba(167,139,250,0.3)" : "linear-gradient(135deg, #7C3AED, #A78BFA)",
+        border: "none", color: "#fff", cursor: loading ? "default" : "pointer", marginBottom: 20,
+        display: "flex", alignItems: "center", justifyContent: "center", gap: 8
+      }}>
+        {loading ? (
+          <>
+            <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>⟳</span>
+            Analizando tus datos...
+          </>
+        ) : (
+          "✨ Analizar con IA"
+        )}
+      </button>
+
+      {error && (
+        <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 12, padding: 14, color: "#F87171", fontSize: 13 }}>
+          {error}
+        </div>
+      )}
+
+      {analysis && (
+        <div style={{
+          background: "rgba(255,255,255,0.03)", border: "1px solid rgba(167,139,250,0.3)",
+          borderRadius: 16, padding: 20
+        }}>
+          <div style={{ fontSize: 12, color: "#A78BFA", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>
+            ✨ Análisis personalizado
+          </div>
+          <div style={{ fontSize: 14, lineHeight: 1.7, color: "#CBD5E1", whiteSpace: "pre-wrap" }}>
+            {analysis}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// FORM HELPERS
+// ============================================================
+function InputField({ label, value, onChange, placeholder, type = "text" }) {
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <label style={{ display: "block", fontSize: 11, color: "#94A3B8", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>
+        {label}
+      </label>
+      <input
+        type={type}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        style={{
+          width: "100%", padding: "10px 14px", borderRadius: 10, fontSize: 14,
+          background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)",
+          color: "#F1F5F9", outline: "none", boxSizing: "border-box",
+        }}
+      />
+    </div>
+  );
+}
+
+function SelectField({ label, value, onChange, options }) {
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <label style={{ display: "block", fontSize: 11, color: "#94A3B8", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>
+        {label}
+      </label>
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        style={{
+          width: "100%", padding: "10px 14px", borderRadius: 10, fontSize: 14,
+          background: "rgba(30,30,40,0.95)", border: "1px solid rgba(255,255,255,0.12)",
+          color: "#F1F5F9", outline: "none", boxSizing: "border-box"
+        }}
+      >
+        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
+    </div>
+  );
+}
+
+function AddTripModal({ form, setForm, onSave, onClose }) {
+  return (
+    <Modal title="➕ Registrar Viaje" onClose={onClose}>
+      <SelectField
+        label="Plataforma"
+        value={form.platform}
+        onChange={v => setForm(f => ({ ...f, platform: v }))}
+        options={PLATFORMS.map(p => ({ value: p.id, label: p.name }))}
+      />
+      <InputField label="Tarifa recibida (COP)" value={form.fare} onChange={v => setForm(f => ({ ...f, fare: v }))} placeholder="Ej: 18000" type="number" />
+      <InputField label="Propina (COP, opcional)" value={form.tip} onChange={v => setForm(f => ({ ...f, tip: v }))} placeholder="Ej: 2000" type="number" />
+      <InputField label="Kilómetros del viaje" value={form.km} onChange={v => setForm(f => ({ ...f, km: v }))} placeholder="Ej: 7.5" type="number" />
+      <InputField label="Duración (minutos)" value={form.minutes} onChange={v => setForm(f => ({ ...f, minutes: v }))} placeholder="Ej: 22" type="number" />
+      <InputField label="Notas (opcional)" value={form.notes} onChange={v => setForm(f => ({ ...f, notes: v }))} placeholder="Ej: Viaje aeropuerto" />
+      <button onClick={onSave} style={{
+        width: "100%", padding: 14, borderRadius: 12, fontWeight: 700, fontSize: 14,
+        background: "linear-gradient(135deg, #F5A623, #F97316)", border: "none", color: "#fff", cursor: "pointer"
+      }}>
+        Guardar Viaje
+      </button>
+    </Modal>
+  );
+}
+
+function AddExpenseModal({ form, setForm, onSave, onClose }) {
+  const types = ["carga", "mantenimiento", "lavado", "llantas", "multa", "seguro", "otro"];
+  return (
+    <Modal title="💸 Registrar Gasto" onClose={onClose}>
+      <SelectField
+        label="Tipo de gasto"
+        value={form.type}
+        onChange={v => setForm(f => ({ ...f, type: v }))}
+        options={types.map(t => ({ value: t, label: t.charAt(0).toUpperCase() + t.slice(1) }))}
+      />
+      <InputField label="Monto (COP)" value={form.amount} onChange={v => setForm(f => ({ ...f, amount: v }))} placeholder="Ej: 80000" type="number" />
+      <InputField label="Descripción (opcional)" value={form.description} onChange={v => setForm(f => ({ ...f, description: v }))} placeholder="Ej: Gasolina full tank" />
+      <button onClick={onSave} style={{
+        width: "100%", padding: 14, borderRadius: 12, fontWeight: 700, fontSize: 14,
+        background: "linear-gradient(135deg, #F87171, #EF4444)", border: "none", color: "#fff", cursor: "pointer"
+      }}>
+        Guardar Gasto
+      </button>
+    </Modal>
+  );
+}
+
+function Modal({ title, onClose, children }) {
+  return (
+    <div style={{
+      position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 100,
+      display: "flex", alignItems: "flex-end", justifyContent: "center"
+    }}>
+      <div style={{
+        background: "#0F172A", border: "1px solid rgba(255,255,255,0.1)",
+        borderRadius: "20px 20px 0 0", padding: "24px 20px", width: "100%",
+        maxWidth: 480, maxHeight: "85vh", overflowY: "auto"
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <span style={{ fontWeight: 700, fontSize: 16, color: "#F1F5F9" }}>{title}</span>
+          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.1)", border: "none", borderRadius: 8, color: "#94A3B8", cursor: "pointer", padding: "6px 10px", fontSize: 16 }}>✕</button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// MAIN APP
+// ============================================================
+function DriveIQColombia({ externalTrips, externalExpenses, onTripsChange, onExpensesChange,
+    syncPin, syncStatus, syncing, onSyncPush, onSyncPull, onOpenSyncModal } = {}) {
+  const [state, setState] = useState(INITIAL_STATE);
+
+  // Sync external trips/expenses into local state when provided
+  useEffect(() => {
+    if (externalTrips !== undefined) {
+      setState(s => ({ ...s, trips: externalTrips }));
+    }
+  }, [externalTrips]);
+  useEffect(() => {
+    if (externalExpenses !== undefined) {
+      setState(s => ({ ...s, expenses: externalExpenses }));
+    }
+  }, [externalExpenses]);
+
+  // Propagate changes upward when externally managed
+  useEffect(() => {
+    if (onTripsChange) onTripsChange(state.trips);
+  }, [state.trips]);
+  useEffect(() => {
+    if (onExpensesChange) onExpensesChange(state.expenses);
+  }, [state.expenses]);
+
+  const set = useCallback((key, val) => setState(s => ({ ...s, [key]: val })), []);
+
+  function addTrip() {
+    const f = state.tripForm;
+    if (!f.fare) return;
+    const trip = {
+      id: Date.now(),
+      platform: f.platform,
+      fare: parseFloat(f.fare) || 0,
+      tip: parseFloat(f.tip) || 0,
+      km: parseFloat(f.km) || 0,
+      notes: f.notes,
+      timestamp: Date.now(),
+    };
+    setState(s => ({
+      ...s, trips: [...s.trips, trip],
+      showAddTrip: false,
+      tripForm: { platform: "uber", fare: "", km: "", minutes: "", tip: "", notes: "" }
+    }));
+  }
+
+  function addExpense() {
+    const f = state.expenseForm;
+    if (!f.amount) return;
+    const exp = {
+      id: Date.now(),
+      type: f.type,
+      amount: parseFloat(f.amount) || 0,
+      description: f.description,
+      timestamp: Date.now(),
+    };
+    setState(s => ({
+      ...s, expenses: [...s.expenses, exp],
+      showAddExpense: false,
+      expenseForm: { type: "carga", amount: "", description: "" }
+    }));
+  }
+
+  function deleteTrip(id) {
+    setState(s => ({ ...s, trips: s.trips.filter(t => t.id !== id) }));
+  }
+
+  function deleteExpense(id) {
+    setState(s => ({ ...s, expenses: s.expenses.filter(e => e.id !== id) }));
+  }
+
+  // ── Guard mode state lifted to app level so it persists across tab switches ──
+  const [guardActive, setGuardActive] = useState(false);
+  const [guardResult, setGuardResult] = useState(null);
+  const [guardLastText, setGuardLastText] = useState("");
+  const [guardFare, setGuardFare] = useState("");
+  const [guardKm, setGuardKm]     = useState("");
+  const [guardMin, setGuardMin]   = useState("");
+  const [guardHistory, setGuardHistory] = useState([]); // last 5 verdicts
+  const [guardTick, setGuardTick] = useState(0);        // seconds since activation
+  const guardRecRef  = useRef(null);
+  const guardTimerRef = useRef(null);
+  const [wakeLock, setWakeLock] = useState(null);
+
+  // Screen wake-lock — keeps screen on while guard is active
+  async function acquireWakeLock() {
+    try {
+      if ("wakeLock" in navigator) {
+        const wl = await navigator.wakeLock.request("screen");
+        setWakeLock(wl);
+      }
+    } catch(e) {}
+  }
+  function releaseWakeLock() {
+    try { if (wakeLock) { wakeLock.release(); setWakeLock(null); } } catch(e) {}
+  }
+
+  function startGuard() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    acquireWakeLock();
+    setGuardActive(true);
+    setGuardTick(0);
+    guardTimerRef.current = setInterval(() => setGuardTick(t => t + 1), 1000);
+
+    function listen() {
+      if (!guardRecRef.current && guardActive === false && !startGuard._running) return;
+      const rec = new SR();
+      rec.lang = "es-CO";
+      rec.continuous = false;
+      rec.interimResults = false;
+      rec.onresult = (e) => {
+        const text = e.results[0][0].transcript.toLowerCase();
+        setGuardLastText(text);
+        const nums = text.match(/\d+\.?\d*/g);
+        if (nums && nums.length >= 2) {
+          const f = nums[0], k = nums[1];
+          setGuardFare(f); setGuardKm(k);
+          const r = evaluate(f, k);
+          setGuardResult(r);
+          setGuardHistory(h => [{ ...r, fare: f, km: k, ts: Date.now() }, ...h].slice(0, 5));
+          playTone(r.isGood ? "good" : r.isMarginal ? "marginal" : "bad");
+          vibrate(r.isGood ? [60, 40, 60] : r.isMarginal ? [120] : [250, 60, 250]);
+        } else if (nums && nums.length === 1) {
+          setGuardLastText("⚠️ Falta el km — di tarifa y km");
+        }
+      };
+      rec.onend = () => {
+        if (guardRecRef._active) setTimeout(listen, 600);
+      };
+      rec.onerror = (ev) => {
+        if (ev.error !== "no-speech" && guardRecRef._active) setTimeout(listen, 1200);
+      };
+      guardRecRef.current = rec;
+      guardRecRef._active = true;
+      try { rec.start(); } catch(err) {}
+    }
+    startGuard._running = true;
+    listen();
+  }
+
+  function stopGuard() {
+    guardRecRef._active = false;
+    startGuard._running = false;
+    if (guardRecRef.current) {
+      try { guardRecRef.current.onend = null; guardRecRef.current.abort(); } catch(e) {}
+      guardRecRef.current = null;
+    }
+    clearInterval(guardTimerRef.current);
+    releaseWakeLock();
+    setGuardActive(false);
+    setGuardResult(null);
+    setGuardLastText("");
+    setGuardFare(""); setGuardKm(""); setGuardMin("");
+    setGuardTick(0);
+  }
+
+  function formatTick(s) {
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+    return h > 0
+      ? `${h}:${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}`
+      : `${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}`;
+  }
+
+  // ── Layout: Guard mode takes full screen; other tabs slide in beneath ──
+  const TABS = [
+    { id: "guardia", label: "Guardia", icon: "🛡️" },
+    { id: "dashboard", label: "Stats", icon: "📊" },
+    { id: "trips", label: "Viajes", icon: "🗂️" },
+    { id: "zones", label: "Zonas", icon: "🗺️" },
+    { id: "expenses", label: "Gastos", icon: "💸" },
+    { id: "ai", label: "IA", icon: "🤖" },
+  ];
+
+  // Start on guard tab by default
+  const activeTab = state.activeTab === "dashboard" && !state._tabSet ? "guardia" : state.activeTab;
+  function setTab(t) { setState(s => ({ ...s, activeTab: t, _tabSet: true })); }
+
+  const showAdd = activeTab === "trips";
+  const showAddExp = activeTab === "expenses";
+
+  const isGuardTab = activeTab === "guardia";
+
+  return (
+    <div style={{
+      minHeight: "100vh",
+      background: isGuardTab && guardActive ? "#000000" : "#070B14",
+      fontFamily: "'Syne', 'Segoe UI', sans-serif",
+      color: "#F1F5F9", maxWidth: 480, margin: "0 auto", position: "relative",
+      transition: "background 0.8s ease"
+    }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap');
+        * { box-sizing: border-box; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+        input::placeholder { color: #334155 !important; }
+        select option { background: #0F172A; }
+        @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.25)} }
+        @keyframes ripple { 0%{transform:scale(1);opacity:0.6} 100%{transform:scale(2.4);opacity:0} }
+        @keyframes verdictIn { 0%{opacity:0;transform:scale(0.82) translateY(16px)} 100%{opacity:1;transform:scale(1) translateY(0)} }
+        @keyframes slideUp { from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1} }
+        @keyframes breathe { 0%,100%{opacity:0.5;transform:scale(1)} 50%{opacity:1;transform:scale(1.04)} }
+        @keyframes scanline { 0%{top:0} 100%{top:100%} }
+      `}</style>
+
+      {/* ═══════════════════════════════════════════════════
+          GUARD MODE SCREEN — Full driving UI
+      ═══════════════════════════════════════════════════ */}
+      {isGuardTab && (
+        <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+
+          {/* Top status bar */}
+          <div style={{
+            padding: "14px 20px 10px",
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+            borderBottom: `1px solid ${guardActive ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.06)"}`,
+            background: guardActive ? "rgba(34,197,94,0.04)" : "transparent",
+            transition: "all 0.5s"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 18 }}>🚕</span>
+              <span style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.5 }}>
+                Drive<span style={{ color: "#F5A623" }}>IQ</span>
+              </span>
+              {guardActive && (
+                <span style={{
+                  fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20,
+                  background: "rgba(34,197,94,0.15)", color: "#4ADE80",
+                  border: "1px solid rgba(34,197,94,0.3)", letterSpacing: 1
+                }}>● EN GUARDIA</span>
+              )}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              {guardActive && (
+                <div style={{ fontFamily: "monospace", fontSize: 13, color: "#4ADE80", fontWeight: 700 }}>
+                  {formatTick(guardTick)}
+                </div>
+              )}
+              {onSyncPush && (
+                <div style={{ display: "flex", gap: 4 }}>
+                  <button onClick={onSyncPush} disabled={syncing} title="Subir datos" style={{
+                    padding: "4px 9px", borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: "pointer",
+                    background: syncStatus==="ok" ? "rgba(34,197,94,0.15)" : "rgba(245,166,35,0.12)",
+                    border: `1px solid ${syncStatus==="ok" ? "rgba(34,197,94,0.3)" : "rgba(245,166,35,0.25)"}`,
+                    color: syncStatus==="ok" ? "#4ADE80" : "#F5A623",
+                    display: "flex", alignItems: "center", gap: 4
+                  }}>
+                    <span style={{ animation: syncing ? "spin 1s linear infinite" : "none", display:"inline-block" }}>
+                      {syncing ? "⟳" : "☁️"}
+                    </span>
+                    {syncPin ? "↑" : "Sync"}
+                  </button>
+                  <button onClick={onSyncPull} disabled={syncing} title="Bajar datos" style={{
+                    padding: "4px 9px", borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: "pointer",
+                    background: "rgba(96,165,250,0.1)", border: "1px solid rgba(96,165,250,0.25)", color: "#60A5FA"
+                  }}>↓</button>
+                  <button onClick={onOpenSyncModal} title="Configurar código" style={{
+                    padding: "4px 8px", borderRadius: 8, fontSize: 11, cursor: "pointer",
+                    background: syncPin ? "rgba(34,197,94,0.1)" : "rgba(255,255,255,0.05)",
+                    border: `1px solid ${syncPin ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.08)"}`,
+                    color: syncPin ? "#4ADE80" : "#475569"
+                  }}>{syncPin ? "🔑" : "🔑"}</button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ── INACTIVE STATE ── */}
+          {!guardActive && (
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", animation: "fadeIn 0.4s ease" }}>
+              {/* Big activate button */}
+              <div style={{ position: "relative", marginBottom: 36 }}>
+                <div style={{
+                  position: "absolute", inset: -20,
+                  borderRadius: "50%", border: "1px solid rgba(245,166,35,0.2)",
+                  animation: "breathe 3s ease-in-out infinite"
+                }} />
+                <div style={{
+                  position: "absolute", inset: -40,
+                  borderRadius: "50%", border: "1px solid rgba(245,166,35,0.1)",
+                  animation: "breathe 3s ease-in-out infinite 0.5s"
+                }} />
+                <button onClick={startGuard} style={{
+                  width: 160, height: 160, borderRadius: "50%",
+                  background: "linear-gradient(145deg, #1a1200, #2d1f00)",
+                  border: "2px solid rgba(245,166,35,0.5)",
+                  boxShadow: "0 0 40px rgba(245,166,35,0.2), inset 0 1px 0 rgba(255,255,255,0.05)",
+                  cursor: "pointer", display: "flex", flexDirection: "column",
+                  alignItems: "center", justifyContent: "center", gap: 6
+                }}>
+                  <span style={{ fontSize: 44 }}>🎙️</span>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: "#F5A623", letterSpacing: 1 }}>ACTIVAR</span>
+                  <span style={{ fontSize: 10, color: "#78716C", letterSpacing: 0.5 }}>MODO GUARDIA</span>
+                </button>
+              </div>
+
+              <div style={{ textAlign: "center", maxWidth: 300, marginBottom: 32 }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: "#E2E8F0", marginBottom: 8 }}>
+                  Escucha continua de viajes
+                </div>
+                <div style={{ fontSize: 13, color: "#64748B", lineHeight: 1.6 }}>
+                  Activa una vez al salir. Mientras manejas, di los números de cada solicitud — la app decide sola con sonido y vibración.
+                </div>
+              </div>
+
+              {/* How to use */}
+              <div style={{
+                width: "100%", background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: 18
+              }}>
+                <div style={{ fontSize: 11, color: "#475569", textTransform: "uppercase", letterSpacing: 1, marginBottom: 14 }}>
+                  Cómo usar
+                </div>
+                {[
+                  { icon: "1️⃣", text: 'Di 2 números: "doce mil, siete km"  (tarifa · distancia)' },
+                  { icon: "2️⃣", text: "La app evalúa y responde con sonido + vibración" },
+                  { icon: "✅", text: "2 vibraciones cortas = Acepta el viaje" },
+                  { icon: "❌", text: "1 vibración larga = Rechaza el viaje" },
+                  { icon: "⚠️", text: "1 vibración media = Marginal, decide tú" },
+                ].map((s, i) => (
+                  <div key={i} style={{ display: "flex", gap: 12, marginBottom: 10, alignItems: "flex-start" }}>
+                    <span style={{ fontSize: 16, flexShrink: 0 }}>{s.icon}</span>
+                    <span style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.5 }}>{s.text}</span>
+                  </div>
+                ))}
+              </div>
+
+              {!(window.SpeechRecognition || window.webkitSpeechRecognition) && (
+                <div style={{
+                  marginTop: 14, padding: "10px 14px", borderRadius: 10,
+                  background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)",
+                  fontSize: 12, color: "#F87171", textAlign: "center"
+                }}>
+                  ⚠️ Tu navegador no soporta voz. Usa Chrome en Android para activar esta función.
+                </div>
+              )}
+
+              {/* Install button — visible when not in standalone mode */}
+              {!window.matchMedia('(display-mode: standalone)').matches && (
+                <button
+                  onClick={() => window.showDriveIQInstall && window.showDriveIQInstall()}
+                  style={{
+                    marginTop: 14, width: "100%", padding: "12px 16px",
+                    borderRadius: 14, fontWeight: 700, fontSize: 13,
+                    background: "rgba(245,166,35,0.08)",
+                    border: "1px solid rgba(245,166,35,0.25)",
+                    color: "#F5A623", cursor: "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8
+                  }}>
+                  📲 Instalar como app en este dispositivo
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* ── ACTIVE STATE ── */}
+          {guardActive && (
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "0 0 20px" }}>
+
+              {/* Listening orb */}
+              <div style={{
+                display: "flex", flexDirection: "column", alignItems: "center",
+                padding: "28px 24px 20px", position: "relative"
+              }}>
+                {/* Ripple rings */}
+                <div style={{ position: "relative", marginBottom: 20 }}>
+                  {[0,1,2].map(i => (
+                    <div key={i} style={{
+                      position: "absolute",
+                      inset: -(i * 18 + 10),
+                      borderRadius: "50%",
+                      border: "1px solid rgba(34,197,94,0.15)",
+                      animation: `ripple ${2 + i * 0.5}s ease-out infinite`,
+                      animationDelay: `${i * 0.4}s`,
+                      pointerEvents: "none"
+                    }} />
+                  ))}
+                  <div style={{
+                    width: 90, height: 90, borderRadius: "50%",
+                    background: "radial-gradient(circle, rgba(34,197,94,0.25) 0%, rgba(34,197,94,0.05) 70%)",
+                    border: "2px solid rgba(34,197,94,0.5)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    boxShadow: "0 0 30px rgba(34,197,94,0.2)"
+                  }}>
+                    <span style={{ fontSize: 38, animation: "pulse 2s ease-in-out infinite" }}>🎙️</span>
+                  </div>
+                </div>
+
+                {/* Live transcript */}
+                <div style={{
+                  fontSize: 13, color: "#4ADE80", fontWeight: 600, textAlign: "center",
+                  minHeight: 40, maxWidth: 280, lineHeight: 1.5,
+                  fontStyle: guardLastText ? "normal" : "italic"
+                }}>
+                  {guardLastText || "Escuchando... di tarifa y km"}
+                </div>
+              </div>
+
+              {/* Last evaluated values */}
+              {(guardFare || guardKm || guardMin) && (
+                <div style={{
+                  display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, padding: "0 20px", marginBottom: 16
+                }}>
+                  {[
+                    { label: "Tarifa", val: guardFare, unit: "COP", color: "#F5A623" },
+                    { label: "Km",     val: guardKm,   unit: "km",  color: "#60A5FA" },
+                  ].map((f, i) => (
+                    <div key={i} style={{
+                      flex: 1, background: `${f.color}0F`,
+                      border: `1px solid ${f.color}33`,
+                      borderRadius: 12, padding: "8px 10px", textAlign: "center"
+                    }}>
+                      <div style={{ fontSize: 9, color: "#475569", textTransform: "uppercase", letterSpacing: 0.5 }}>{f.label}</div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: f.color, fontFamily: "monospace" }}>
+                        {f.val || "—"}
+                      </div>
+                      <div style={{ fontSize: 9, color: "#475569" }}>{f.unit}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* VERDICT */}
+              {guardResult && (
+                <div style={{ padding: "0 20px", marginBottom: 16, animation: "verdictIn 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
+                  <VerdictCard
+                    result={guardResult}
+                    onReset={() => {
+                      setGuardResult(null);
+                      setGuardFare(""); setGuardKm(""); setGuardMin("");
+                      setGuardLastText("");
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* History strip */}
+              {guardHistory.length > 0 && (
+                <div style={{ padding: "0 20px", marginBottom: 16 }}>
+                  <div style={{ fontSize: 10, color: "#334155", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>
+                    Últimas evaluaciones
+                  </div>
+                  <div style={{ display: "flex", gap: 6, overflowX: "auto" }}>
+                    {guardHistory.map((h, i) => (
+                      <div key={i} style={{
+                        flexShrink: 0, padding: "6px 10px", borderRadius: 10,
+                        background: h.isGood ? "rgba(34,197,94,0.1)" : h.isMarginal ? "rgba(245,158,11,0.1)" : "rgba(239,68,68,0.1)",
+                        border: `1px solid ${h.isGood ? "rgba(34,197,94,0.25)" : h.isMarginal ? "rgba(245,158,11,0.25)" : "rgba(239,68,68,0.25)"}`,
+                        textAlign: "center"
+                      }}>
+                        <div style={{ fontSize: 14 }}>{h.isGood ? "✅" : h.isMarginal ? "⚠️" : "❌"}</div>
+                        <div style={{ fontSize: 10, fontFamily: "monospace", color: "#64748B", marginTop: 2 }}>
+                          {fmt(parseFloat(h.fare) || 0).replace("$", "").replace(",00", "")}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── Batería BYD Yuan UP ── */}
+              <BatteryWidget />
+
+                            {/* Today's mini stats */}
+              <div style={{ padding: "0 20px", marginBottom: 20 }}>
+                <div style={{
+                  display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8,
+                  background: "rgba(255,255,255,0.02)", borderRadius: 14, padding: 12,
+                  border: "1px solid rgba(255,255,255,0.05)"
+                }}>
+                  {(() => {
+                    const today = getLastNDays(state.trips, 1);
+                    const income = today.reduce((s,t) => s + t.fare + (t.tip||0), 0);
+                    const km = today.reduce((s,t) => s + (t.km||0), 0);
+                    const net = income - km * COST_PER_KM;
+                    return [
+                      { label: "Hoy bruto", val: fmt(income), color: "#F5A623" },
+                      { label: "Hoy neto", val: fmt(net), color: net >= 0 ? "#4ADE80" : "#F87171" },
+                      { label: "Viajes hoy", val: today.length, color: "#60A5FA" },
+                    ];
+                  })().map((s, i) => (
+                    <div key={i} style={{ textAlign: "center" }}>
+                      <div style={{ fontSize: 9, color: "#334155", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 3 }}>{s.label}</div>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: s.color, fontFamily: "monospace" }}>{s.val}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Stop button */}
+              <div style={{ padding: "0 20px" }}>
+                <button onClick={stopGuard} style={{
+                  width: "100%", padding: 14, borderRadius: 14, fontWeight: 700, fontSize: 14,
+                  background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)",
+                  color: "#F87171", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8
+                }}>
+                  ⏹ Detener guardia
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════
+          OTHER TABS
+      ═══════════════════════════════════════════════════ */}
+      {!isGuardTab && (
+        <>
+          {/* Header */}
+          <div style={{
+            padding: "16px 20px 0",
+            background: "linear-gradient(180deg, rgba(245,166,35,0.07) 0%, transparent 100%)",
+            borderBottom: "1px solid rgba(255,255,255,0.06)"
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 18 }}>🚕</span>
+                <span style={{ fontSize: 18, fontWeight: 800, letterSpacing: -0.5 }}>
+                  Drive<span style={{ color: "#F5A623" }}>IQ</span>
+                </span>
+              </div>
+              <div style={{ fontSize: 11, color: "#475569" }}>
+                ⚡ ${Math.round(COST_PER_KM).toLocaleString("es-CO")}/km · 🔋 {REAL_RANGE_KM} km
+              </div>
+            </div>
+          </div>
+
+          <div style={{ padding: 20, paddingBottom: 90, animation: "fadeIn 0.25s ease" }}>
+            {activeTab === "dashboard" && (
+              <Dashboard trips={state.trips} expenses={state.expenses} filterDays={state.filterDays} setFilterDays={v => set("filterDays", v)} />
+            )}
+            {activeTab === "trips" && <TripLog trips={state.trips} onDelete={deleteTrip} />}
+            {activeTab === "zones" && <Zones />}
+            {activeTab === "expenses" && <Expenses expenses={state.expenses} onDelete={deleteExpense} />}
+            {activeTab === "ai" && <AIAnalysis trips={state.trips} expenses={state.expenses} />}
+          </div>
+        </>
+      )}
+
+      {/* ═══════════════════════════════════════════════════
+          BOTTOM NAV — always visible
+      ═══════════════════════════════════════════════════ */}
+      <div style={{
+        position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)",
+        width: "100%", maxWidth: 480,
+        background: guardActive && isGuardTab
+          ? "rgba(0,0,0,0.97)"
+          : "rgba(7,11,20,0.97)",
+        borderTop: `1px solid ${guardActive && isGuardTab ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.08)"}`,
+        backdropFilter: "blur(16px)",
+        display: "flex", padding: "8px 4px 12px", gap: 2, zIndex: 100,
+        transition: "all 0.5s"
+      }}>
+        {TABS.map(tab => {
+          const isActive = tab.id === activeTab;
+          const isGuard = tab.id === "guardia";
+          return (
+            <button key={tab.id} onClick={() => setTab(tab.id)} style={{
+              flex: 1, padding: isGuard ? "8px 4px" : "6px 2px",
+              borderRadius: isGuard ? 12 : 8,
+              border: isGuard && guardActive
+                ? "1px solid rgba(34,197,94,0.4)"
+                : isActive ? "1px solid rgba(245,166,35,0.3)" : "1px solid transparent",
+              background: isGuard && guardActive
+                ? "rgba(34,197,94,0.12)"
+                : isActive ? "rgba(245,166,35,0.1)" : "transparent",
+              cursor: "pointer", display: "flex", flexDirection: "column",
+              alignItems: "center", gap: 2
+            }}>
+              <span style={{
+                fontSize: isGuard ? 20 : 16,
+                animation: isGuard && guardActive ? "pulse 2s infinite" : "none"
+              }}>{tab.icon}</span>
+              <span style={{
+                fontSize: 9, fontWeight: 700, letterSpacing: 0.3,
+                color: isGuard && guardActive
+                  ? "#4ADE80"
+                  : isActive ? "#F5A623" : "#334155"
+              }}>
+                {isGuard && guardActive ? "● VIVO" : tab.label.toUpperCase()}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* FAB for trip/expense add */}
+      {(showAdd || showAddExp) && (
+        <button onClick={() => showAdd ? set("showAddTrip", true) : set("showAddExpense", true)} style={{
+          position: "fixed", bottom: 76, right: 20, width: 52, height: 52, borderRadius: "50%",
+          background: "linear-gradient(135deg, #F5A623, #F97316)", border: "none", color: "#fff",
+          fontSize: 22, cursor: "pointer", boxShadow: "0 6px 24px rgba(245,166,35,0.4)",
+          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 101
+        }}>+</button>
+      )}
+
+      {/* Modals */}
+      {state.showAddTrip && (
+        <AddTripModal
+          form={state.tripForm}
+          setForm={v => setState(s => ({ ...s, tripForm: v(s.tripForm) }))}
+          onSave={addTrip}
+          onClose={() => set("showAddTrip", false)}
+        />
+      )}
+      {state.showAddExpense && (
+        <AddExpenseModal
+          form={state.expenseForm}
+          setForm={v => setState(s => ({ ...s, expenseForm: v(s.expenseForm) }))}
+          onSave={addExpense}
+          onClose={() => set("showAddExpense", false)}
+        />
+      )}
+    </div>
+  );
+}
+
+
+// ── Sync UI injected into the main app via a wrapper ─────────────────────
+function DriveIQWithSync() {
+  const [syncing, setSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState(null); // null | 'ok' | 'err' | 'pulled'
+  const [showSyncModal, setShowSyncModal] = useState(false);
+  const [pin, setPin] = useState(() => localStorage.getItem('driveiq_pin') || '');
+  const [pinInput, setPinInput] = useState('');
+  const [syncData, setSyncData] = useState(null); // data pulled from server
+
+  // ── Save/load trips & expenses from localStorage ──
+  const [trips, setTrips] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('driveiq_trips') || '[]'); } catch(e) { return []; }
+  });
+  const [expenses, setExpenses] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('driveiq_expenses') || '[]'); } catch(e) { return []; }
+  });
+
+  useEffect(() => { localStorage.setItem('driveiq_trips', JSON.stringify(trips)); }, [trips]);
+  useEffect(() => { localStorage.setItem('driveiq_expenses', JSON.stringify(expenses)); }, [expenses]);
+
+  async function handlePush() {
+    if (!pin) { setShowSyncModal(true); return; }
+    setSyncing(true);
+    const ok = await syncPush(pin, trips, expenses);
+    setSyncStatus(ok ? 'ok' : 'err');
+    setSyncing(false);
+    setTimeout(() => setSyncStatus(null), 3000);
+  }
+
+  async function handlePull() {
+    if (!pin) { setShowSyncModal(true); return; }
+    setSyncing(true);
+    const data = await syncPull(pin);
+    if (data) {
+      setSyncData(data);
+      setShowSyncModal(true);
+    } else {
+      setSyncStatus('err');
+      setTimeout(() => setSyncStatus(null), 3000);
+    }
+    setSyncing(false);
+  }
+
+  function confirmPull() {
+    if (syncData) {
+      setTrips(syncData.trips || []);
+      setExpenses(syncData.expenses || []);
+      setSyncStatus('pulled');
+      setTimeout(() => setSyncStatus(null), 3000);
+    }
+    setSyncData(null);
+    setShowSyncModal(false);
+  }
+
+  function savePin() {
+    const p = pinInput.trim().toUpperCase();
+    if (p.length < 4) return;
+    setPin(p);
+    localStorage.setItem('driveiq_pin', p);
+    setPinInput('');
+    setShowSyncModal(false);
+  }
+
+  const syncBar = syncStatus ? (
+    <div style={{
+      position:'fixed', top: 0, left:'50%', transform:'translateX(-50%)',
+      zIndex:9998, maxWidth:480, width:'100%',
+      background: syncStatus==='ok' ? '#166534' : syncStatus==='pulled' ? '#1e3a5f' : '#7f1d1d',
+      color:'#fff', fontSize:13, fontWeight:700, textAlign:'center',
+      padding:'10px 16px', fontFamily:'sans-serif',
+      borderBottom: '1px solid rgba(255,255,255,0.1)'
+    }}>
+      {syncStatus==='ok' ? '✅ Datos subidos — disponibles en otros dispositivos' :
+       syncStatus==='pulled' ? '📥 Datos sincronizados desde la nube' :
+       '❌ Error de sincronización — verifica conexión'}
+    </div>
+  ) : null;
+
+  const syncModal = showSyncModal ? (
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.8)',zIndex:9997,display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+      <div style={{background:'#0F172A',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'20px 20px 0 0',padding:'24px 20px',width:'100%',maxWidth:480,fontFamily:'sans-serif'}}>
+
+        {syncData ? (
+          // Confirm pull
+          <>
+            <div style={{fontSize:16,fontWeight:800,color:'#F1F5F9',marginBottom:8}}>📥 Datos encontrados</div>
+            <div style={{fontSize:13,color:'#94A3B8',marginBottom:20}}>
+              Se encontraron <b style={{color:'#60A5FA'}}>{syncData.trips?.length||0} viajes</b> y <b style={{color:'#F87171'}}>{syncData.expenses?.length||0} gastos</b> en la nube.<br/>
+              <span style={{color:'#F59E0B',fontSize:12}}>⚠️ Esto reemplazará los datos locales de este dispositivo.</span>
+            </div>
+            <div style={{display:'flex',gap:10}}>
+              <button onClick={()=>{setSyncData(null);setShowSyncModal(false);}} style={{flex:1,padding:12,borderRadius:12,background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.1)',color:'#94A3B8',fontWeight:700,cursor:'pointer',fontSize:14}}>Cancelar</button>
+              <button onClick={confirmPull} style={{flex:1,padding:12,borderRadius:12,background:'linear-gradient(135deg,#3B82F6,#1D4ED8)',border:'none',color:'#fff',fontWeight:700,cursor:'pointer',fontSize:14}}>Importar datos</button>
+            </div>
+          </>
+        ) : (
+          // Set PIN
+          <>
+            <div style={{fontSize:16,fontWeight:800,color:'#F1F5F9',marginBottom:6}}>🔑 Código de sincronización</div>
+            <div style={{fontSize:12,color:'#64748B',marginBottom:16,lineHeight:1.6}}>
+              Elige un código único de 4–8 caracteres (letras y números). Úsalo en todos tus dispositivos para sincronizar.
+            </div>
+            <input
+              value={pinInput}
+              onChange={e=>setPinInput(e.target.value.toUpperCase().slice(0,8))}
+              placeholder="Ej: TAXI2025 o CTG001"
+              maxLength={8}
+              style={{width:'100%',padding:'12px 14px',borderRadius:10,fontSize:16,fontWeight:700,
+                background:'rgba(255,255,255,0.08)',border:'1px solid rgba(255,255,255,0.2)',
+                color:'#F1F5F9',outline:'none',marginBottom:12,letterSpacing:2,textAlign:'center',
+                textTransform:'uppercase'}}
+            />
+            {pin && <div style={{fontSize:11,color:'#4ADE80',textAlign:'center',marginBottom:10}}>Código actual: <b>{pin}</b></div>}
+            <div style={{display:'flex',gap:10}}>
+              <button onClick={()=>setShowSyncModal(false)} style={{flex:1,padding:12,borderRadius:12,background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.1)',color:'#94A3B8',fontWeight:700,cursor:'pointer',fontSize:14}}>Cancelar</button>
+              <button onClick={savePin} disabled={pinInput.length<4} style={{flex:2,padding:12,borderRadius:12,background:pinInput.length>=4?'linear-gradient(135deg,#F5A623,#F97316)':'rgba(255,255,255,0.05)',border:'none',color:pinInput.length>=4?'#fff':'#334155',fontWeight:700,cursor:pinInput.length>=4?'pointer':'default',fontSize:14}}>Guardar código</button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  ) : null;
+
+  return (
+    <>
+      {syncBar}
+      {syncModal}
+      <DriveIQColombia
+        externalTrips={trips}
+        externalExpenses={expenses}
+        onTripsChange={setTrips}
+        onExpensesChange={setExpenses}
+        syncPin={pin}
+        syncStatus={syncStatus}
+        syncing={syncing}
+        onSyncPush={handlePush}
+        onSyncPull={handlePull}
+        onOpenSyncModal={()=>setShowSyncModal(true)}
+      />
+    </>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(React.createElement(DriveIQWithSync));
+</script>
+</body>
+</html>
