@@ -117,6 +117,7 @@ select option{background:#0F172A}
       <div style="font-size:10px;color:#334155;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Últimas</div>
       <div id="ghistlist" style="display:flex;gap:6px;overflow-x:auto"></div>
     </div>
+    <div id="rtPanel" style="padding:0 16px;margin-bottom:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:12px;padding:10px"></div>
     <div style="padding:0 16px;margin-bottom:10px">
       <div class="g3" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:12px;padding:10px">
         <div style="text-align:center"><div style="font-size:9px;color:#334155;text-transform:uppercase">Hoy bruto</div><div id="tinc" style="font-size:12px;font-weight:800;color:#F5A623;font-family:monospace">$0</div></div>
@@ -307,6 +308,220 @@ function handleActivate() {
 
 var CPK = 907*13/100;
 var RANGE = 310, BKWH = 45, KWH = 907;
+
+function parseVoice(txt) {
+  // Normalize: remove punctuation, extra spaces, "km", "pesos", "mil", commas
+  var t = txt.toLowerCase()
+    .replace(/kilómetros?|kilómetro|kms?/g, ' ')
+    .replace(/pesos?|cop|cop\b/g, ' ')
+    .replace(/[,;.]/g, ' ')
+    .replace(/\s+/g, ' ').trim();
+
+  // Word-to-number map (Spanish)
+  var W = {
+    'cero':0,'un':1,'uno':1,'una':1,'dos':2,'tres':3,'cuatro':4,'cinco':5,
+    'seis':6,'siete':7,'ocho':8,'nueve':9,'diez':10,'once':11,'doce':12,
+    'trece':13,'catorce':14,'quince':15,'dieciséis':16,'dieciseis':16,
+    'diecisiete':17,'dieciocho':18,'diecinueve':19,
+    'veinte':20,'veintiuno':21,'veintidós':22,'veintidos':22,
+    'veintitrés':23,'veintitres':23,'veinticuatro':24,'veinticinco':25,
+    'veintiséis':26,'veintiseis':26,'veintisiete':27,'veintiocho':28,
+    'veintinueve':29,
+    'treinta':30,'cuarenta':40,'cincuenta':50,'sesenta':60,
+    'setenta':70,'ochenta':80,'noventa':90,
+    'cien':100,'ciento':100,'doscientos':200,'trescientos':300,
+    'cuatrocientos':400,'quinientos':500,'seiscientos':600,
+    'setecientos':700,'ochocientos':800,'novecientos':900,
+    'mil':1000,'millón':1000000,'millon':1000000
+  };
+
+  // Convert word sequence to number
+  function wordsToNum(words) {
+    var val = 0, cur = 0;
+    for (var i = 0; i < words.length; i++) {
+      var w = words[i];
+      if (W[w] !== undefined) {
+        var n = W[w];
+        if (n === 1000) { cur = cur === 0 ? 1000 : cur * 1000; val += cur; cur = 0; }
+        else if (n >= 100) { cur += n; }
+        else if (w === 'y') { /* skip */ }
+        else { cur += n; }
+      }
+    }
+    return val + cur;
+  }
+
+  // Try to extract numbers — mix of digits and words
+  // Strategy: split into tokens, group consecutive word-numbers and digit-numbers
+  var tokens = t.split(' ').filter(function(x){return x.length>0;});
+  var numbers = [];
+  var i = 0;
+  while (i < tokens.length) {
+    var tok = tokens[i];
+    // Pure digit
+    if (/^\d+$/.test(tok)) {
+      var n = parseInt(tok);
+      // Check if next token is "mil" (e.g. "12 mil")
+      if (i+1 < tokens.length && tokens[i+1] === 'mil') {
+        n = n * 1000;
+        i += 2;
+        // Optionally add hundreds after "mil" (e.g. "12 mil 500")
+        if (i < tokens.length && /^\d+$/.test(tokens[i])) {
+          n += parseInt(tokens[i]); i++;
+        } else if (i < tokens.length && W[tokens[i]] !== undefined && W[tokens[i]] < 1000) {
+          n += W[tokens[i]]; i++;
+        }
+      } else {
+        i++;
+      }
+      numbers.push(n);
+      continue;
+    }
+    // "y" — skip connector
+    if (tok === 'y') { i++; continue; }
+    // Word number — collect consecutive word-number tokens
+    if (W[tok] !== undefined || tok === 'y') {
+      var wordGroup = [];
+      while (i < tokens.length && (W[tokens[i]] !== undefined || tokens[i] === 'y')) {
+        wordGroup.push(tokens[i]); i++;
+      }
+      var n = wordsToNum(wordGroup);
+      if (n > 0) numbers.push(n);
+      continue;
+    }
+    i++;
+  }
+
+  // Heuristic: if we got numbers, try to assign fare/km intelligently
+  // fare is always bigger (>= 1000 COP), km is small (1-50)
+  if (numbers.length === 0) return null;
+  if (numbers.length === 1) return numbers; // partial
+
+  // Sort candidates: largest = fare, smallest near front = km
+  // But preserve order — user says fare first, km second
+  var result = [];
+  for (var j = 0; j < numbers.length; j++) {
+    if (numbers[j] >= 1000) {
+      result.push(numbers[j]); // fare candidate
+    } else {
+      // Could be km (1-50) or abbreviated fare like "12" meaning "12000"
+      if (result.length === 0) {
+        // First number, small — treat as thousands (e.g. "doce" = 12000)
+        if (numbers[j] <= 100) result.push(numbers[j] * 1000);
+        else result.push(numbers[j]);
+      } else {
+        result.push(numbers[j]); // km
+      }
+    }
+  }
+
+  // If only got one useful number, try to get km from remaining
+  return result.slice(0, 2);
+}
+
+
+// ── Real-time analytics engine ────────────────────────────────────────────
+// Runs after each trip verdict and updates guard thresholds dynamically
+
+var RT = {
+  sessionStart: Date.now(),
+  sessionEarnings: 0,
+  sessionKm: 0,
+  sessionCount: 0,
+  rejects: 0,
+  accepts: 0,
+  // Dynamic thresholds — start at defaults, adjust from data
+  minCpkMultiplier: 2.2,   // CPK * multiplier = min acceptable COP/km
+  minNet: 5000,
+  // Hour-of-day performance (0-23)
+  hourStats: {}
+};
+
+function rtUpdate(r, fare, km) {
+  var now = new Date();
+  var hour = now.getHours();
+
+  if (r.good || r.marg) {
+    RT.accepts++;
+    // Track what actually gets accepted
+    if (!RT.hourStats[hour]) RT.hourStats[hour] = {count:0, totalCpk:0, totalNet:0};
+    RT.hourStats[hour].count++;
+    RT.hourStats[hour].totalCpk += r.cpk;
+    RT.hourStats[hour].totalNet += r.net;
+  } else {
+    RT.rejects++;
+  }
+
+  // After every 5 evaluations, recalibrate thresholds
+  var total = RT.accepts + RT.rejects;
+  if (total > 0 && total % 5 === 0) {
+    rtRecalibrate();
+  }
+
+  // Update session stats for accepted trips only
+  if (r.good) {
+    RT.sessionEarnings += parseFloat(fare) || 0;
+    RT.sessionKm       += parseFloat(km)   || 0;
+    RT.sessionCount++;
+  }
+
+  rtRenderPanel();
+}
+
+function rtRecalibrate() {
+  var now = new Date().getHours();
+  // Look at last hour's data
+  var h = RT.hourStats[now];
+  if (!h || h.count < 3) return;
+
+  var avgCpk = h.totalCpk / h.count;
+  var avgNet = h.totalNet / h.count;
+
+  // If market is hot (high avg COP/km), raise bar — be more selective
+  // If market is cold (low avg), lower bar — accept more
+  var marketCpk = avgCpk / CPK; // ratio vs cost
+  if (marketCpk > 3.5) {
+    RT.minCpkMultiplier = Math.min(3.0, RT.minCpkMultiplier + 0.1);
+    RT.minNet = Math.min(8000, RT.minNet + 500);
+  } else if (marketCpk < 2.0) {
+    RT.minCpkMultiplier = Math.max(1.5, RT.minCpkMultiplier - 0.1);
+    RT.minNet = Math.max(3000, RT.minNet - 500);
+  }
+}
+
+function rtRenderPanel() {
+  var el = document.getElementById('rtPanel');
+  if (!el) return;
+  var elapsed = Math.round((Date.now() - RT.sessionStart) / 60000);
+  var rate = elapsed > 0 ? RT.sessionEarnings / elapsed * 60 : 0;
+  var total = RT.accepts + RT.rejects;
+  var accPct = total > 0 ? Math.round(RT.accepts / total * 100) : 0;
+  el.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+      '<span style="font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:1px">Análisis en tiempo real</span>' +
+      '<span style="font-size:10px;color:#64748B">'+elapsed+'min sesión</span>' +
+    '</div>' +
+    '<div class="g3">' +
+      '<div style="background:rgba(0,0,0,.2);border-radius:8px;padding:7px;text-align:center"><div style="font-size:9px;color:#475569;text-transform:uppercase">COP/hora</div><div style="font-size:13px;font-weight:800;color:#F5A623;font-family:monospace">'+fm(rate)+'</div></div>' +
+      '<div style="background:rgba(0,0,0,.2);border-radius:8px;padding:7px;text-align:center"><div style="font-size:9px;color:#475569;text-transform:uppercase">Aceptados</div><div style="font-size:13px;font-weight:800;color:#4ADE80;font-family:monospace">'+accPct+'%</div></div>' +
+      '<div style="background:rgba(0,0,0,.2);border-radius:8px;padding:7px;text-align:center"><div style="font-size:9px;color:#475569;text-transform:uppercase">Min umbral</div><div style="font-size:13px;font-weight:800;color:#60A5FA;font-family:monospace">'+fm(CPK*RT.minCpkMultiplier)+'/km</div></div>' +
+    '</div>' +
+    (RT.minCpkMultiplier !== 2.2 ?
+      '<div style="margin-top:6px;font-size:10px;color:'+(RT.minCpkMultiplier>2.2?'#F5A623':'#60A5FA')+';text-align:center">'+
+        (RT.minCpkMultiplier>2.2 ? '📈 Mercado activo — siendo más selectivo' : '📉 Mercado flojo — umbral reducido')+
+      '</div>' : '');
+}
+
+// Override ev() to use dynamic thresholds
+var _evBase = ev;
+ev = function(f, k) {
+  var fi=parseFloat(f)||0, ki=parseFloat(k)||0;
+  var cost=ki*CPK, net=fi-cost, cpk=ki>0?fi/ki:0;
+  var good = cpk >= CPK * RT.minCpkMultiplier && net >= RT.minNet;
+  var marg = !good && cpk >= CPK * 1.5 && net >= 2000;
+  return {f:fi, k:ki, net:net, cpk:cpk, cost:cost, good:good, marg:marg};
+};
+
 var PLATS = {uber:{n:'Uber',bg:'#111'},indriver:{n:'inDriver',bg:'#00D26A'},didi:{n:'DiDi',bg:'#FF6633'}};
 var ZONES = [
   {n:'Bocagrande / Castillogrande',p:['07:00-09:00','17:00-20:00','22:00-01:00'],t:'Hoteles + Turismo + Rumba',d:98},
