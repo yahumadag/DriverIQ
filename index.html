@@ -86,12 +86,16 @@ nav button .ic{font-size:18px;line-height:1}
       <div style="font-size:13px;color:#64748B;line-height:1.6">Activa y di los números de la solicitud — la app decide sola con sonido y vibración.</div>
     </div>
 
-    <div class="card" style="font-size:12px;color:#94A3B8;line-height:2">
+    <div class="card" style="font-size:12px;color:#94A3B8;line-height:1.9">
       <div style="font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Cómo hablar</div>
-      <b style="color:#F5A623">"doce, siete"</b> → $12.000 · 7km<br>
-      <b style="color:#F5A623">"quince cinco"</b> → $15.000 · 5km<br>
-      <b style="color:#F5A623">"veinte mil, ocho"</b> → $20.000 · 8km<br>
-      <b style="color:#F5A623">"18 6"</b> → $18.000 · 6km
+      <b style="color:#F5A623">"doce, siete"</b> → $12.000 · 7km ✅<br>
+      <b style="color:#F5A623">"quince cinco"</b> → $15.000 · 5km ✅<br>
+      <b style="color:#F5A623">"veinte mil, ocho"</b> → $20.000 · 8km ✅<br>
+      <b style="color:#F5A623">"18 6"</b> → $18.000 · 6km ✅<br>
+      <div style="margin-top:8px;padding:8px;background:rgba(245,166,35,0.08);border-radius:8px;border:1px solid rgba(245,166,35,0.2)">
+        ⚡ Mín: <b style="color:#F5A623">$12.000</b> · Ref: <b style="color:#F5A623">$2.000/km</b><br>
+        <span style="font-size:10px;color:#64748B">Costo real BYD: $118/km — ganancia neta: $1.882/km</span>
+      </div>
     </div>
 
     <div id="gErr" style="display:none;margin-top:12px;padding:12px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:10px;font-size:12px;color:#F87171;line-height:1.5"></div>
@@ -399,17 +403,28 @@ function parseVoice(raw) {
 var RT = {
   start: Date.now(), earn:0, km:0, count:0,
   accepts:0, rejects:0,
-  mult: 2.2,   // CPK multiplier — auto-adjusts
-  minNet: 5000,
+  mult: 2.2,        // CPK multiplier — auto-adjusts
+  minNet: 5000,     // min net profit
+  minFare: 12000,   // tarifa mínima absoluta
+  refCpk: 2000,     // COP/km de referencia del conductor
   hourData: {}
 };
 
 function evaluate(f, k) {
   var fi=parseFloat(f)||0, ki=parseFloat(k)||0;
   var cost=ki*CPK, net=fi-cost, cpk=ki>0?fi/ki:0;
-  var good = cpk >= CPK*RT.mult && net >= RT.minNet;
-  var marg = !good && cpk >= CPK*1.4 && net >= 2000;
-  return {f:fi,k:ki,net:net,cpk:cpk,cost:cost,good:good,marg:marg};
+
+  // Primary criteria: fare >= minFare AND COP/km >= refCpk * 0.85
+  // (allow 15% below reference before marking marginal)
+  var minCpk  = RT.refCpk * 0.85;   // ~$1700/km = bueno
+  var margCpk = RT.refCpk * 0.65;   // ~$1300/km = marginal
+
+  var fareOk = fi >= RT.minFare;
+  var good   = fareOk && cpk >= minCpk  && net >= RT.minNet;
+  var marg   = !good  && fi >= (RT.minFare*0.85) && cpk >= margCpk && net >= 2000;
+
+  return {f:fi,k:ki,net:net,cpk:cpk,cost:cost,good:good,marg:marg,
+          fareOk:fareOk,minCpk:minCpk};
 }
 
 function rtRecord(r, f, k) {
@@ -435,14 +450,22 @@ function rtCalibrate(h) {
   var hd = RT.hourData[h];
   if (!hd || hd.c < 3) return;
   var avgCpk = hd.sumCpk / hd.c;
-  var ratio  = avgCpk / CPK;
-  // Hot market → raise bar; cold → lower
-  if (ratio > 3.5) {
-    RT.mult   = Math.min(3.0, RT.mult+0.15);
-    RT.minNet = Math.min(9000, RT.minNet+500);
-  } else if (ratio < 2.0) {
-    RT.mult   = Math.max(1.5, RT.mult-0.1);
-    RT.minNet = Math.max(2500, RT.minNet-300);
+
+  // Adjust refCpk based on what the market is actually paying
+  // If market pays well above reference → raise bar (be more selective)
+  // If market pays below reference → lower bar (accept more to keep moving)
+  if (avgCpk > RT.refCpk * 1.3) {
+    RT.refCpk = Math.min(3000, RT.refCpk + 100);
+    RT.minNet = Math.min(9000, RT.minNet + 300);
+  } else if (avgCpk < RT.refCpk * 0.8) {
+    RT.refCpk = Math.max(1500, RT.refCpk - 80);
+    RT.minNet = Math.max(3000, RT.minNet - 200);
+  }
+  // minFare also adjusts slightly with market
+  if (avgCpk > RT.refCpk * 1.5) {
+    RT.minFare = Math.min(15000, RT.minFare + 500);
+  } else if (avgCpk < RT.refCpk * 0.7) {
+    RT.minFare = Math.max(10000, RT.minFare - 500);
   }
 }
 
@@ -454,13 +477,21 @@ function rtDraw() {
   var tot  = RT.accepts+RT.rejects;
   var acc  = tot>0 ? Math.round(RT.accepts/tot*100) : 0;
   var changed = RT.mult !== 2.2;
-  var trend = RT.mult > 2.2 ? '📈 Mercado activo — más selectivo' : RT.mult < 2.2 ? '📉 Mercado flojo — umbral reducido' : '';
+  var refChanged = RT.refCpk !== 2000;
+  var trend = refChanged
+    ? (RT.refCpk > 2000 ? '📈 Mercado activo — umbral subió a '+fm(RT.refCpk)+'/km'
+                        : '📉 Mercado flojo — umbral bajó a '+fm(RT.refCpk)+'/km')
+    : '';
   el.innerHTML =
     '<div class="sml" style="margin-bottom:8px">Análisis en tiempo real</div>'+
     '<div class="g3">'+
       sBox('COP/hora', fm(rate), '#F5A623')+
       sBox('Aceptados', acc+'%', '#4ADE80')+
-      sBox('Umbral', fm(CPK*RT.mult)+'/km', '#60A5FA')+
+      sBox('Ref/km', fm(RT.refCpk), '#60A5FA')+
+    '</div>'+
+    '<div class="g2" style="margin-top:8px">'+
+      sBox('Tarifa mín', fm(RT.minFare), '#F5A623')+
+      sBox('Neto mín', fm(RT.minNet), '#4ADE80')+
     '</div>'+
     (trend?'<div style="margin-top:8px;font-size:10px;text-align:center;color:#94A3B8">'+trend+'</div>':'');
 }
