@@ -403,6 +403,7 @@ function parseVoice(raw) {
 var RT = {
   start: Date.now(), earn:0, km:0, count:0,
   accepts:0, rejects:0,
+  pending: null,
   mult: 2.2,        // CPK multiplier — auto-adjusts
   minNet: 5000,     // min net profit
   minFare: 12000,   // tarifa mínima absoluta
@@ -427,24 +428,53 @@ function evaluate(f, k) {
           fareOk:fareOk,minCpk:minCpk};
 }
 
-function rtRecord(r, f, k) {
+function rtRecord(r, f, k, accepted) {
   var h = new Date().getHours();
-  if (!RT.hourData[h]) RT.hourData[h]={c:0,sumCpk:0,sumNet:0};
+  if (!RT.hourData[h]) RT.hourData[h]={c:0,sumCpk:0,sumNet:0,accepted:0,rejected:0,totalFare:0};
   RT.hourData[h].c++;
-  RT.hourData[h].sumCpk += r.cpk;
-  RT.hourData[h].sumNet  += r.net;
+  RT.hourData[h].sumCpk   += r.cpk;
+  RT.hourData[h].sumNet   += r.net;
+  RT.hourData[h].totalFare+= r.f;
 
-  if (r.good || r.marg) { RT.accepts++; }
-  else { RT.rejects++; }
+  // accepted = true (user tapped Acepté), false (Rechacé), undefined (auto from verdict)
+  if (accepted === true)  { RT.accepts++; RT.hourData[h].accepted++; }
+  else if (accepted === false) { RT.rejects++; RT.hourData[h].rejected++; }
+  else { // auto: count based on verdict
+    if (r.good || r.marg) RT.accepts++; else RT.rejects++;
+  }
 
-  if (r.good) { RT.earn += r.f; RT.km += r.k; RT.count++; }
+  if (accepted === true || (accepted===undefined && r.good)) {
+    RT.earn += parseFloat(f)||0;
+    RT.km   += parseFloat(k)||0;
+    RT.count++;
+  }
 
-  // Recalibrate every 5 evals
   var tot = RT.accepts + RT.rejects;
   if (tot>0 && tot%5===0) rtCalibrate(h);
 
   rtDraw();
 }
+
+function rtRecord(r, f, k, accepted) {
+  var h=new Date().getHours();
+  if(!RT.hourData[h])RT.hourData[h]={c:0,sumCpk:0,sumNet:0,accepted:0,rejected:0,totalFare:0};
+  RT.hourData[h].c++;
+  RT.hourData[h].sumCpk+=r.cpk;
+  RT.hourData[h].sumNet+=r.net;
+  RT.hourData[h].totalFare+=r.f;
+  if(accepted===true){RT.accepts++;RT.hourData[h].accepted++;}
+  else if(accepted===false){RT.rejects++;RT.hourData[h].rejected++;}
+  else{if(r.good||r.marg)RT.accepts++;else RT.rejects++;}
+  if(accepted===true||(accepted===undefined&&r.good)){
+    RT.earn+=parseFloat(f)||0;
+    RT.km+=parseFloat(k)||0;
+    RT.count++;
+  }
+  var tot=RT.accepts+RT.rejects;
+  if(tot>0&&tot%5===0)rtCalibrate(h);
+  rtDraw();
+}
+
 
 function rtCalibrate(h) {
   var hd = RT.hourData[h];
@@ -470,31 +500,45 @@ function rtCalibrate(h) {
 }
 
 function rtDraw() {
-  var el = document.getElementById('rtPanel');
-  if (!el) return;
-  var mins = Math.max(1, Math.round((Date.now()-RT.start)/60000));
-  var rate = RT.earn/mins*60;
-  var tot  = RT.accepts+RT.rejects;
-  var acc  = tot>0 ? Math.round(RT.accepts/tot*100) : 0;
-  var changed = RT.mult !== 2.2;
-  var refChanged = RT.refCpk !== 2000;
-  var trend = refChanged
-    ? (RT.refCpk > 2000 ? '📈 Mercado activo — umbral subió a '+fm(RT.refCpk)+'/km'
-                        : '📉 Mercado flojo — umbral bajó a '+fm(RT.refCpk)+'/km')
-    : '';
-  el.innerHTML =
-    '<div class="sml" style="margin-bottom:8px">Análisis en tiempo real</div>'+
-    '<div class="g3">'+
-      sBox('COP/hora', fm(rate), '#F5A623')+
-      sBox('Aceptados', acc+'%', '#4ADE80')+
-      sBox('Ref/km', fm(RT.refCpk), '#60A5FA')+
+  var el=document.getElementById('rtPanel');
+  if(!el)return;
+  var mins=Math.max(1,Math.round((Date.now()-RT.start)/60000));
+  var rate=RT.earn/mins*60;
+  var tot=RT.accepts+RT.rejects;
+  var acc=tot>0?Math.round(RT.accepts/tot*100):0;
+  var h=new Date().getHours();
+  var hd=RT.hourData[h]||{c:0,sumCpk:0,sumNet:0,accepted:0,rejected:0,totalFare:0};
+  var avgCpk=hd.c>0?hd.sumCpk/hd.c:0;
+  var avgFare=hd.c>0?hd.totalFare/hd.c:0;
+  var hourTot=(hd.accepted||0)+(hd.rejected||0);
+  var demandPct=hourTot>0?Math.round((hd.accepted||0)/hourTot*100):null;
+  // Estimated energy cost per hour based on km driven
+  var costPerHour=RT.km>0?(RT.km/mins*60)*CPK:0;
+  // Market status
+  var mktStatus='',mktColor='#94A3B8';
+  if(avgCpk>RT.refCpk*1.2){mktStatus='🔥 Mercado caliente';mktColor='#F87171';}
+  else if(RT.refCpk>2000){mktStatus='📈 Mercado activo';mktColor='#F5A623';}
+  else if(RT.refCpk<2000){mktStatus='📉 Mercado flojo';mktColor='#60A5FA';}
+
+  el.innerHTML=
+    '<div class="row" style="margin-bottom:8px">'+
+      '<span class="sml">Análisis sesión</span>'+
+      '<span style="font-size:10px;color:#475569">'+mins+'min · '+RT.count+' aceptados</span>'+
     '</div>'+
-    '<div class="g2" style="margin-top:8px">'+
-      sBox('Tarifa mín', fm(RT.minFare), '#F5A623')+
-      sBox('Neto mín', fm(RT.minNet), '#4ADE80')+
+    '<div class="g3" style="margin-bottom:8px">'+
+      sBox('COP/hora',rate>0?fm(rate):'—','#F5A623')+
+      sBox('% Aceptado',acc+'%','#4ADE80')+
+      sBox('Ref/km',fm(RT.refCpk),'#60A5FA')+
     '</div>'+
-    (trend?'<div style="margin-top:8px;font-size:10px;text-align:center;color:#94A3B8">'+trend+'</div>':'');
+    '<div class="g3" style="margin-bottom:8px">'+
+      sBox('Prom esta hora',avgCpk>0?fm(avgCpk)+'/km':'—',avgCpk>=RT.refCpk*0.85?'#4ADE80':'#F59E0B')+
+      sBox('Tarifa mín',fm(RT.minFare),'#F5A623')+
+      sBox('Costo⚡/h',costPerHour>0?fm(costPerHour):'—','#94A3B8')+
+    '</div>'+
+    (mktStatus?'<div style="padding:7px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);font-size:11px;color:'+mktColor+';text-align:center;margin-bottom:6px">'+mktStatus+' — umbral ajustado a '+fm(RT.refCpk)+'/km</div>':'')+
+    (demandPct!==null?'<div style="font-size:10px;color:#475569;text-align:center">Esta hora: '+demandPct+'% aceptación ('+hourTot+' evaluados)</div>':'');
 }
+
 
 function sBox(l,v,c){
   return '<div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:7px;text-align:center">'+
@@ -506,30 +550,73 @@ function sBox(l,v,c){
 // ═══════════════════════════════════════════════════════════════════════════
 // VERDICT CARD
 // ═══════════════════════════════════════════════════════════════════════════
-function vCard(r, clearFn) {
+function vCardFilter(r) {
   var e=r.good?'✅':r.marg?'⚠️':'❌';
   var w=r.good?'ACEPTA':r.marg?'MARGINAL':'RECHAZA';
   var c=r.good?'#4ADE80':r.marg?'#F59E0B':'#F87171';
   var bg=r.good?'rgba(34,197,94,.1)':r.marg?'rgba(245,158,11,.1)':'rgba(239,68,68,.1)';
   var bd=r.good?'rgba(34,197,94,.3)':r.marg?'rgba(245,158,11,.3)':'rgba(239,68,68,.3)';
-  var pct=Math.min(100, r.cpk/(CPK*4)*100);
+  var pct=Math.min(100,r.cpk/(CPK*4)*100);
   return '<div class="vcard" style="background:'+bg+';border:2px solid '+bd+'">'+
-    '<div style="font-size:44px;line-height:1.1">'+e+'</div>'+
-    '<div class="mono" style="font-size:24px;font-weight:900;color:'+c+';margin:6px 0">'+w+'</div>'+
-    '<div class="g3" style="margin:10px 0">'+
-      sBox('Utilidad', fm(r.net), r.net>0?'#4ADE80':'#F87171')+
-      sBox('Costo ⚡', fm(r.cost), '#4ADE80')+
-      sBox('COP/km', fm(r.cpk), r.cpk>=CPK*RT.mult?'#4ADE80':'#F59E0B')+
+    '<div style="font-size:40px;line-height:1.1">'+e+'</div>'+
+    '<div class="mono" style="font-size:22px;font-weight:900;color:'+c+';margin:4px 0">'+w+'</div>'+
+    '<div class="g3" style="margin:8px 0">'+
+      sBox('Utilidad',fm(r.net),r.net>0?'#4ADE80':'#F87171')+
+      sBox('Costo ⚡',fm(r.cost),'#4ADE80')+
+      sBox('COP/km',fm(r.cpk),r.cpk>=RT.refCpk*0.85?'#4ADE80':'#F59E0B')+
     '</div>'+
     '<div class="bb"><div class="bf" style="width:'+pct+'%;background:'+c+'"></div></div>'+
-    '<div class="sml" style="margin-top:4px;text-align:center">Meta: '+fm(CPK*RT.mult)+'/km</div>'+
-    '<button onclick="'+clearFn+'()" style="margin-top:10px;width:100%;padding:9px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#94A3B8;font-size:12px;cursor:pointer">Nuevo →</button>'+
+    '<div class="sml" style="margin-top:4px;text-align:center">Ref: '+fm(RT.refCpk)+'/km · Mín: '+fm(RT.minFare)+'</div>'+
+    '<button onclick="fClear()" style="margin-top:10px;width:100%;padding:9px;border-radius:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#94A3B8;font-size:12px;cursor:pointer">Nuevo →</button>'+
   '</div>';
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// AUDIO & VIBRATION
-// ═══════════════════════════════════════════════════════════════════════════
+function vCard(r, f, k) {
+  var e=r.good?'✅':r.marg?'⚠️':'❌';
+  var w=r.good?'ACEPTA':r.marg?'MARGINAL':'RECHAZA';
+  var c=r.good?'#4ADE80':r.marg?'#F59E0B':'#F87171';
+  var bg=r.good?'rgba(34,197,94,.1)':r.marg?'rgba(245,158,11,.1)':'rgba(239,68,68,.1)';
+  var bd=r.good?'rgba(34,197,94,.3)':r.marg?'rgba(245,158,11,.3)':'rgba(239,68,68,.3)';
+  var pct=Math.min(100,r.cpk/(CPK*4)*100);
+  RT.pending={r:r,f:f,k:k};
+  return '<div class="vcard" style="background:'+bg+';border:2px solid '+bd+'">'+
+    '<div style="font-size:40px;line-height:1.1">'+e+'</div>'+
+    '<div class="mono" style="font-size:22px;font-weight:900;color:'+c+';margin:4px 0">'+w+'</div>'+
+    '<div class="g3" style="margin:8px 0">'+
+      sBox('Utilidad',fm(r.net),r.net>0?'#4ADE80':'#F87171')+
+      sBox('Costo ⚡',fm(r.cost),'#4ADE80')+
+      sBox('COP/km',fm(r.cpk),r.cpk>=RT.refCpk*0.85?'#4ADE80':'#F59E0B')+
+    '</div>'+
+    '<div class="bb"><div class="bf" style="width:'+pct+'%;background:'+c+'"></div></div>'+
+    '<div class="sml" style="margin-top:4px;text-align:center">Ref: '+fm(RT.refCpk)+'/km · Mín: '+fm(RT.minFare)+'</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">'+
+      '<button onclick="userAccepted()" style="padding:10px;border-radius:10px;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.4);color:#4ADE80;font-weight:800;font-size:13px;cursor:pointer">✅ Acepté</button>'+
+      '<button onclick="userRejected()" style="padding:10px;border-radius:10px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#F87171;font-weight:800;font-size:13px;cursor:pointer">❌ Rechacé</button>'+
+    '</div>'+
+    '<button onclick="gClear()" style="margin-top:8px;width:100%;padding:8px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);color:#475569;font-size:11px;cursor:pointer">Omitir →</button>'+
+  '</div>';
+}
+
+function userAccepted() {
+  if (!RT.pending) return;
+  var p=RT.pending; RT.pending=null;
+  trips.push({ts:Date.now(),platform:'uber',fare:p.f,km:p.k,tip:0,src:'guard'});
+  sv('diq_t',trips);
+  updToday();
+  rtRecord(p.r,p.f,p.k,true);
+  gStatus('✅ Guardado — siguiente...');
+  gClear();
+}
+
+function userRejected() {
+  if (!RT.pending) return;
+  var p=RT.pending; RT.pending=null;
+  rtRecord(p.r,p.f,p.k,false);
+  gStatus('❌ Anotado — siguiente...');
+  gClear();
+}
+
+
 function beep(type) {
   try {
     var ac=new(window.AudioContext||window.webkitAudioContext)();
@@ -614,59 +701,62 @@ function gListen() {
   rec.onspeechstart = function(){ gStatus('🔊 Detectando voz...'); };
 
   rec.onresult = function(e) {
-    // Collect ALL alternatives Chrome heard
     var alts = [];
     for (var i=0; i<e.results[0].length; i++) {
       alts.push(e.results[0][i].transcript.trim());
     }
-
-    // Show what was heard (first 2 alternatives)
-    var heard = alts.slice(0,2).join(' / ');
+    var heard = alts[0] || '';
     gStatus('🔊 "' + heard + '"');
 
-    // Try parser on each alternative
     var best = null;
-    for (var i=0; i<alts.length; i++) {
+
+    // Strategy 1: smart word parser on each alternative
+    for (var i=0; i<alts.length && !best; i++) {
       var p = parseVoice(alts[i].toLowerCase());
-      if (p && p.length>=2){ best={txt:alts[i],p:p}; break; }
-      if (!best && p && p.length>=1) best={txt:alts[i],p:p};
+      if (p && p.length>=2) best={txt:alts[i],p:p};
     }
 
-    // Also try parsing raw digits directly from transcript
+    // Strategy 2: extract any sequence of digit groups
     if (!best) {
-      for (var i=0; i<alts.length; i++) {
-        var nums = alts[i].match(/\d+/g);
+      for (var i=0; i<alts.length && !best; i++) {
+        var nums = alts[i].replace(/[.,]/g,' ').match(/\d+/g);
         if (nums && nums.length>=2) {
           var f0=parseInt(nums[0]), k0=parseInt(nums[1]);
-          // small first number = thousands
-          if (f0<=100) f0=f0*1000;
+          if (f0<=100) f0*=1000;
+          if (k0>100)  k0=Math.round(k0/1000)||k0;
           best={txt:alts[i],p:[f0,k0]};
-          break;
         }
       }
     }
 
+    // Strategy 3: single digit group — might be fare only
     if (!best) {
-      gStatus('❓ No entendí: "' + heard + '"');
+      for (var i=0; i<alts.length && !best; i++) {
+        var p = parseVoice(alts[i].toLowerCase());
+        if (p && p.length===1) best={txt:alts[i],p:p};
+      }
+    }
+
+    if (!best) {
+      gStatus('❓ "' + heard + '" — di tarifa y km');
       return;
     }
 
     if (best.p.length>=2) {
       var f=best.p[0], k=best.p[1];
-      gStatus('✅ "' + best.txt + '" → ' + fm(f) + ' · ' + k + 'km');
+      gStatus('✅ ' + fm(f) + ' · ' + k + 'km');
       document.getElementById('gFare').textContent = fm(f);
       document.getElementById('gKm').textContent   = k+'km';
       document.getElementById('gVals').style.display='block';
       var r = evaluate(f,k);
       document.getElementById('gVerdict').style.display='block';
-      document.getElementById('gVerdict').innerHTML=vCard(r,'gClear');
-      GHIST.unshift({r:r,f:f}); if(GHIST.length>5)GHIST.pop();
+      document.getElementById('gVerdict').innerHTML = vCard(r,f,k);
+      GHIST.unshift({r:r,f:f,k:k}); if(GHIST.length>5)GHIST.pop();
       renderGHist();
       beep(r.good?'good':r.marg?'marg':'bad');
       vib(r.good?[60,40,60]:r.marg?[120]:[250,60,250]);
-      rtRecord(r,f,k);
     } else {
-      gStatus('⚠️ "' + best.txt + '" → solo ' + fm(best.p[0]) + ' — falta km');
+      gStatus('⚠️ ' + fm(best.p[0]) + ' — falta km, di otro número');
     }
   };
 
@@ -811,7 +901,7 @@ function fDrawUI(){
 function fRun(){
   if(!fVals[0]||!fVals[1])return;
   var r=evaluate(fVals[0],fVals[1]);
-  document.getElementById('fRes').innerHTML=vCard(r,'fClear');
+  document.getElementById('fRes').innerHTML=vCardFilter(r);
   beep(r.good?'good':r.marg?'marg':'bad');
   vib(r.good?[60,40,60]:r.marg?[120]:[250,60,250]);
 }
