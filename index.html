@@ -382,19 +382,58 @@ function parseVoice(raw) {
 
   if (!numbers.length) return null;
 
-  // Assign: first = fare, second = km
-  // If first number is <=100, treat as thousands (spoken abbreviation)
-  var result = [];
-  for (var j=0; j<Math.min(numbers.length,2); j++) {
-    var v = numbers[j];
-    if (j===0) {
-      result.push(v<=100 ? v*1000 : v);
-    } else {
-      // km should be reasonable (1-60)
-      result.push(v>100 ? Math.round(v/1000) : v);
+  // ── Interpret numbers ────────────────────────────────────────────────────
+  // Rules:
+  //   km values are small: 1–50
+  //   fare values are large: >= 1000 (or small spoken = thousands, e.g. "doce" = 12000)
+  //
+  // 3 numbers spoken → [pickup_km, fare, service_km]
+  //   e.g. "dos quince siete" → [2, 15000, 7]
+  //   e.g. "3 14000 8"        → [3, 14000, 8]
+  //
+  // 2 numbers spoken → [fare, service_km]
+  //   e.g. "quince siete"  → [15000, 7]
+  //   e.g. "14000 8"       → [14000, 8]
+
+  function isKm(v)   { return v >= 1  && v <= 60; }
+  function isFare(v) { return v >= 1000; }
+  function toFare(v) { return v <= 100 ? v * 1000 : v; }
+  function toKm(v)   { return v > 100  ? Math.round(v/1000) : v; }
+
+  if (numbers.length >= 3) {
+    // Candidate: first=pickup, second=fare, third=km
+    var pu = numbers[0];
+    var fa = numbers[1];
+    var km = numbers[2];
+
+    // Normalize
+    if (!isFare(fa)) fa = toFare(fa);
+    if (!isKm(km))   km = toKm(km);
+    if (!isKm(pu))   pu = toKm(pu);
+
+    // Sanity: pickup should be smaller than service km typically
+    if (isKm(pu) && isFare(fa) && isKm(km)) {
+      return [pu, fa, km];
     }
+
+    // Fallback: maybe they said fare first and pickup got misidentified
+    // Try: first=fare, second=km, ignore third or reinterpret
+    fa = toFare(numbers[0]);
+    km = isKm(numbers[1]) ? numbers[1] : toKm(numbers[1]);
+    return [0, fa, km];
   }
-  return result;
+
+  if (numbers.length === 2) {
+    var fa = toFare(numbers[0]);
+    var km = isKm(numbers[1]) ? numbers[1] : toKm(numbers[1]);
+    return [0, fa, km]; // [pickup=0, fare, km]
+  }
+
+  if (numbers.length === 1) {
+    return [toFare(numbers[0])]; // partial — just fare
+  }
+
+  return null;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -729,15 +768,22 @@ function gListen() {
       if (p && p.length>=2) best={txt:alts[i],p:p};
     }
 
-    // Strategy 2: extract any sequence of digit groups
+    // Strategy 2: extract digit groups directly
     if (!best) {
       for (var i=0; i<alts.length && !best; i++) {
         var nums = alts[i].replace(/[.,]/g,' ').match(/\d+/g);
-        if (nums && nums.length>=2) {
+        if (nums && nums.length>=3) {
+          // 3 digits: pickup, fare, km
+          var pu0=parseInt(nums[0]), f0=parseInt(nums[1]), k0=parseInt(nums[2]);
+          if (pu0<=20 && f0<=100) f0*=1000;
+          else if (pu0<=20 && f0>=1000) { /* ok */ }
+          else { pu0=0; f0=parseInt(nums[0]); k0=parseInt(nums[1]); if(f0<=100)f0*=1000; }
+          best={txt:alts[i],p:[pu0,f0,k0]};
+        } else if (nums && nums.length===2) {
           var f0=parseInt(nums[0]), k0=parseInt(nums[1]);
           if (f0<=100) f0*=1000;
           if (k0>100)  k0=Math.round(k0/1000)||k0;
-          best={txt:alts[i],p:[f0,k0]};
+          best={txt:alts[i],p:[0,f0,k0]};
         }
       }
     }
