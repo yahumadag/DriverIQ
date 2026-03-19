@@ -550,70 +550,83 @@ function sBox(l,v,c){
 // ═══════════════════════════════════════════════════════════════════════════
 // VERDICT CARD
 // ═══════════════════════════════════════════════════════════════════════════
-function vCardFilter(r) {
+function vCardFilter(r, pu) {
+  pu = parseFloat(pu)||0;
   var e=r.good?'✅':r.marg?'⚠️':'❌';
   var w=r.good?'ACEPTA':r.marg?'MARGINAL':'RECHAZA';
   var c=r.good?'#4ADE80':r.marg?'#F59E0B':'#F87171';
   var bg=r.good?'rgba(34,197,94,.1)':r.marg?'rgba(245,158,11,.1)':'rgba(239,68,68,.1)';
   var bd=r.good?'rgba(34,197,94,.3)':r.marg?'rgba(245,158,11,.3)':'rgba(239,68,68,.3)';
-  var pct=Math.min(100,r.cpk/(CPK*4)*100);
-  return '<div class="vcard" style="background:'+bg+';border:2px solid '+bd+'">'+
-    '<div style="font-size:40px;line-height:1.1">'+e+'</div>'+
-    '<div class="mono" style="font-size:22px;font-weight:900;color:'+c+';margin:4px 0">'+w+'</div>'+
-    '<div class="g3" style="margin:8px 0">'+
-      sBox('Utilidad',fm(r.net),r.net>0?'#4ADE80':'#F87171')+
-      sBox('Costo ⚡',fm(r.cost),'#4ADE80')+
-      sBox('COP/km',fm(r.cpk),r.cpk>=RT.refCpk*0.85?'#4ADE80':'#F59E0B')+
-    '</div>'+
-    '<div class="bb"><div class="bf" style="width:'+pct+'%;background:'+c+'"></div></div>'+
-    '<div class="sml" style="margin-top:4px;text-align:center">Ref: '+fm(RT.refCpk)+'/km · Mín: '+fm(RT.minFare)+'</div>'+
-    '<button onclick="fClear()" style="margin-top:10px;width:100%;padding:9px;border-radius:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#94A3B8;font-size:12px;cursor:pointer">Nuevo →</button>'+
-  '</div>';
+  var pct=Math.min(100,r.effCpk/(RT.refCpk*2)*100);
+  var puRow = pu>0
+    ? '<div style="padding:5px 9px;border-radius:7px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.17);font-size:11px;margin-bottom:5px;display:flex;justify-content:space-between">'
+      + '<span style="color:#94A3B8">📍 Recogida: <b style="color:#F87171">'+pu+'km</b> ('+fm(r.pickupCost)+')</span>'
+      + '<span style="color:'+(r.pickupPct>25?'#F87171':'#64748B')+'">'+r.pickupPct+'% tarifa</span>'
+      + '</div>'
+    : '';
+  return '<div class="vcard" style="background:'+bg+';border:2px solid '+bd+'">'
+    + '<div style="font-size:40px;line-height:1.1">'+e+'</div>'
+    + '<div class="mono" style="font-size:22px;font-weight:900;color:'+c+';margin:4px 0">'+w+'</div>'
+    + '<div class="g3" style="margin:8px 0">'
+      + sBox('Utilidad neta',fm(r.net),r.net>0?'#4ADE80':'#F87171')
+      + sBox('Costo⚡ total',fm(r.cost),'#94A3B8')
+      + sBox('Ef. COP/km',fm(r.effCpk),r.effCpk>=RT.refCpk*0.82?'#4ADE80':'#F59E0B')
+    + '</div>'
+    + puRow
+    + '<div class="bb"><div class="bf" style="width:'+pct+'%;background:'+c+'"></div></div>'
+    + '<div class="sml" style="margin-top:4px;text-align:center">Ref: '+fm(RT.refCpk)+'/km efect. · Mín: '+fm(RT.minFare)+'</div>'
+    + '<button onclick="fClear()" style="margin-top:10px;width:100%;padding:9px;border-radius:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#94A3B8;font-size:12px;cursor:pointer">Nuevo →</button>'
+    + '</div>';
 }
 
-function vCard(r, f, k) {
+function vCard(r, f, k, pu) {
+  pu = parseFloat(pu)||0;
   var e=r.good?'✅':r.marg?'⚠️':'❌';
   var w=r.good?'ACEPTA':r.marg?'MARGINAL':'RECHAZA';
   var c=r.good?'#4ADE80':r.marg?'#F59E0B':'#F87171';
   var bg=r.good?'rgba(34,197,94,.1)':r.marg?'rgba(245,158,11,.1)':'rgba(239,68,68,.1)';
   var bd=r.good?'rgba(34,197,94,.3)':r.marg?'rgba(245,158,11,.3)':'rgba(239,68,68,.3)';
-  var pct=Math.min(100,r.cpk/(CPK*4)*100);
-  RT.pending={r:r,f:f,k:k};
-  return '<div class="vcard" style="background:'+bg+';border:2px solid '+bd+'">'+
-    '<div style="font-size:40px;line-height:1.1">'+e+'</div>'+
-    '<div class="mono" style="font-size:22px;font-weight:900;color:'+c+';margin:4px 0">'+w+'</div>'+
-    '<div class="g3" style="margin:8px 0">'+
-      sBox('Utilidad',fm(r.net),r.net>0?'#4ADE80':'#F87171')+
-      sBox('Costo ⚡',fm(r.cost),'#4ADE80')+
-      sBox('COP/km',fm(r.cpk),r.cpk>=RT.refCpk*0.85?'#4ADE80':'#F59E0B')+
-    '</div>'+
-    '<div class="bb"><div class="bf" style="width:'+pct+'%;background:'+c+'"></div></div>'+
-    '<div class="sml" style="margin-top:4px;text-align:center">Ref: '+fm(RT.refCpk)+'/km · Mín: '+fm(RT.minFare)+'</div>'+
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">'+
-      '<button onclick="userAccepted()" style="padding:10px;border-radius:10px;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.4);color:#4ADE80;font-weight:800;font-size:13px;cursor:pointer">✅ Acepté</button>'+
-      '<button onclick="userRejected()" style="padding:10px;border-radius:10px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#F87171;font-weight:800;font-size:13px;cursor:pointer">❌ Rechacé</button>'+
-    '</div>'+
-    '<button onclick="gClear()" style="margin-top:8px;width:100%;padding:8px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);color:#475569;font-size:11px;cursor:pointer">Omitir →</button>'+
-  '</div>';
+  var pct=Math.min(100,r.effCpk/(RT.refCpk*2)*100);
+  RT.pending={r:r,f:f,k:k,pu:pu};
+  var puRow = pu>0
+    ? '<div style="padding:5px 9px;border-radius:7px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.17);font-size:11px;margin-bottom:5px;display:flex;justify-content:space-between">'
+      + '<span style="color:#94A3B8">📍 Recogida: <b style="color:#F87171">'+pu+'km</b> ('+fm(r.pickupCost)+')</span>'
+      + '<span style="color:'+(r.pickupPct>25?'#F87171':'#64748B')+'">'+r.pickupPct+'% tarifa</span>'
+      + '</div>'
+    : '';
+  return '<div class="vcard" style="background:'+bg+';border:2px solid '+bd+'">'
+    + '<div style="font-size:40px;line-height:1.1">'+e+'</div>'
+    + '<div class="mono" style="font-size:22px;font-weight:900;color:'+c+';margin:4px 0">'+w+'</div>'
+    + '<div class="g3" style="margin:8px 0">'
+      + sBox('Utilidad neta',fm(r.net),r.net>0?'#4ADE80':'#F87171')
+      + sBox('Costo⚡ total',fm(r.cost),'#94A3B8')
+      + sBox('Ef. COP/km',fm(r.effCpk),r.effCpk>=RT.refCpk*0.82?'#4ADE80':'#F59E0B')
+    + '</div>'
+    + puRow
+    + '<div class="bb"><div class="bf" style="width:'+pct+'%;background:'+c+'"></div></div>'
+    + '<div class="sml" style="margin-top:4px;text-align:center">Ref: '+fm(RT.refCpk)+'/km efect. · Mín: '+fm(RT.minFare)+'</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">'
+      + '<button onclick="userAccepted()" style="padding:10px;border-radius:10px;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.4);color:#4ADE80;font-weight:800;font-size:13px;cursor:pointer">✅ Acepté</button>'
+      + '<button onclick="userRejected()" style="padding:10px;border-radius:10px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#F87171;font-weight:800;font-size:13px;cursor:pointer">❌ Rechacé</button>'
+    + '</div>'
+    + '<button onclick="gClear()" style="margin-top:8px;width:100%;padding:8px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);color:#475569;font-size:11px;cursor:pointer">Omitir →</button>'
+    + '</div>';
 }
 
 function userAccepted() {
   if (!RT.pending) return;
   var p=RT.pending; RT.pending=null;
-  trips.push({ts:Date.now(),platform:'uber',fare:p.f,km:p.k,tip:0,src:'guard'});
-  sv('diq_t',trips);
-  updToday();
+  trips.push({ts:Date.now(),platform:'uber',fare:p.f,km:p.k,pickup:p.pu||0,tip:0,src:'guard'});
+  sv('diq_t',trips); updToday();
   rtRecord(p.r,p.f,p.k,true);
-  gStatus('✅ Guardado — siguiente...');
-  gClear();
+  gStatus('✅ Guardado — siguiente...'); gClear();
 }
 
 function userRejected() {
   if (!RT.pending) return;
   var p=RT.pending; RT.pending=null;
   rtRecord(p.r,p.f,p.k,false);
-  gStatus('❌ Anotado — siguiente...');
-  gClear();
+  gStatus('❌ Anotado — siguiente...'); gClear();
 }
 
 
