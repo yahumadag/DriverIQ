@@ -585,7 +585,8 @@ function gListen(){
     if(GSTEP<2){
       GSTEP++;
       drawStepBar();
-      if(GA)setTimeout(gListen,700);
+      // 900ms pause: let Chrome fully release mic before next step
+      if(GA)setTimeout(gListen, 900);
     } else {
       // All 3 collected
       var pu=GDATA[0],f=GDATA[1],k=GDATA[2];
@@ -603,8 +604,9 @@ function gListen(){
         renderGHist();
         beep(r.good?'good':r.marg?'marg':'bad');
         vib(r.good?[60,40,60]:r.marg?[120]:[250,60,250]);
-        // Reset for next
+        // Reset for next — wait for user to tap Acepte/Rechace
         GSTEP=0;GDATA=[0,0,0];
+        // Don't auto-restart — wait for gClear() button tap
       },200);
     }
   };
@@ -612,11 +614,13 @@ function gListen(){
   rec.onend=function(){
     GR=null;
     var verdictOn=document.getElementById('gVerdict').style.display!=='none';
-    if(GA&&!verdictOn)setTimeout(gListen,300);
+    // 500ms cooldown gives Chrome time to release the mic
+    if(GA&&!verdictOn)setTimeout(gListen, 500);
   };
 
   rec.onerror=function(ev){
     GR=null;
+    // Fatal: permission denied
     if(ev.error==='not-allowed'||ev.error==='service-not-allowed'){
       stopGuard();
       var e=document.getElementById('gErr');
@@ -626,12 +630,29 @@ function gListen(){
       e.textContent='Permiso de microfono denegado. Ve a Ajustes > Apps > Chrome > Permisos > Microfono > Permitir';
       return;
     }
-    if(ev.error!=='no-speech')gStatus('mic error: '+ev.error);
-    if(GA)setTimeout(gListen,ev.error==='no-speech'?200:800);
+    // Transient errors — silent retry, no status change
+    // 'aborted','network','audio-capture' happen during Chrome cooldown period
+    var transient=['aborted','network','audio-capture'];
+    if(transient.indexOf(ev.error)>=0){
+      if(GA)setTimeout(gListen, 600);
+      return;
+    }
+    // no-speech is normal — just restart quickly
+    if(ev.error==='no-speech'){
+      if(GA)setTimeout(gListen, 150);
+      return;
+    }
+    // Only show unexpected errors
+    gStatus('Reintentando...');
+    if(GA)setTimeout(gListen, 800);
   };
 
   GR=rec;
-  try{rec.start();}catch(e){GR=null;gStatus('start error: '+e.message);if(GA)setTimeout(gListen,1000);}
+  try{rec.start();}catch(e){
+    GR=null;
+    // InvalidStateError = Chrome not ready yet, silent retry
+    if(GA)setTimeout(gListen, 700);
+  }
 }
 
 function drawStepBar(){
@@ -674,7 +695,9 @@ function gClear(){
   document.getElementById('gVals').style.display='none';
   GSTEP=0;GDATA=[0,0,0];
   drawStepBar();
-  if(GA)setTimeout(gListen,400);
+  gStatus('Listo para siguiente viaje...');
+  // 1200ms: give Chrome plenty of time after verdict interaction
+  if(GA)setTimeout(gListen, 1200);
 }
 
 function renderGHist(){
