@@ -545,115 +545,124 @@ function startGuard(){
 }
 
 function gListen(){
-  if(!GA)return;
-  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  var rec;
-  try{rec=new SR();}catch(e){gStatus('Error SR: '+e.message);if(GA)setTimeout(gListen,2000);return;}
-  rec.lang='es-CO';rec.continuous=false;rec.interimResults=false;rec.maxAlternatives=5;
+  if(!GA) return;
+  if(GR){ try{GR.abort();}catch(e){} GR=null; }
 
-  rec.onstart=function(){
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var rec;
+  try{ rec = new SR(); } catch(e){ gStatus('SR error: '+e.message); return; }
+
+  // CONTINUOUS mode — one session for all 3 steps
+  // Chrome keeps mic open; we detect each spoken number via onresult
+  rec.lang = 'es-CO';
+  rec.continuous = true;
+  rec.interimResults = false;
+  rec.maxAlternatives = 5;
+
+  rec.onstart = function(){
     gStatus(GSTEP_LABELS[GSTEP]+': '+GSTEP_HINT[GSTEP]);
     drawStepBar();
   };
 
-  rec.onresult=function(e){
-    var alts=[];
-    for(var i=0;i<e.results[0].length;i++) alts.push(e.results[0][i].transcript.trim());
-    var heard=alts[0]||'';
+  rec.onresult = function(e){
+    // Only process the latest result
+    var idx = e.resultIndex;
+    if(!e.results[idx].isFinal) return;
 
-    // Try each alternative to extract number for current step
-    var n=null;
-    var isKm=(GSTEP===0||GSTEP===2);
-    for(var i=0;i<alts.length&&n===null;i++){
-      n=extractNum(alts[i],isKm);
+    var alts = [];
+    for(var i=0; i<e.results[idx].length; i++){
+      alts.push(e.results[idx][i].transcript.trim());
+    }
+    var heard = alts[0]||'';
+
+    // Extract number for current step
+    var isKm = (GSTEP===0 || GSTEP===2);
+    var n = null;
+    for(var i=0; i<alts.length && n===null; i++){
+      n = extractNum(alts[i], isKm);
     }
 
     if(n===null){
-      gStatus('"'+heard+'" - no entendi, repite');
-      if(GA)setTimeout(gListen,500);
+      gStatus('"'+heard+'" - repite');
       return;
     }
 
-    // Validate range
-    if(GSTEP===0&&n>25){gStatus('"'+heard+'" - maximo 25km recogida, repite');if(GA)setTimeout(gListen,500);return;}
-    if(GSTEP===2&&n>100){gStatus('"'+heard+'" - maximo 100km servicio, repite');if(GA)setTimeout(gListen,500);return;}
+    // Validate
+    if(GSTEP===0 && n>25){ gStatus('"'+heard+'" - max 25km recogida'); return; }
+    if(GSTEP===2 && n>100){ gStatus('"'+heard+'" - max 100km servicio'); return; }
 
-    GDATA[GSTEP]=n;
-    gStatus('Ok: '+GSTEP_LABELS[GSTEP]+' = '+(isKm?n+'km':fm(n)));
+    // Save step value
+    GDATA[GSTEP] = n;
+    gStatus('Ok: '+(isKm ? n+'km' : fm(n)));
     drawStepBar();
 
-    if(GSTEP<2){
+    if(GSTEP < 2){
       GSTEP++;
-      drawStepBar();
-      // 900ms pause: let Chrome fully release mic before next step
-      if(GA)setTimeout(gListen, 900);
-    } else {
-      // All 3 collected
-      var pu=GDATA[0],f=GDATA[1],k=GDATA[2];
-      gStatus('Evaluando...');
+      // Brief pause then prompt next step
       setTimeout(function(){
-        document.getElementById('gFare').textContent=fm(f);
-        document.getElementById('gKm').textContent=k+'km'+(pu>0?' + '+pu+'km recogida':'');
-        document.getElementById('gVals').style.display='block';
-        var r=evaluate(f,k,pu);
-        RT.pending={r:r,f:f,k:k,pu:pu};
-        document.getElementById('gVerdict').style.display='block';
-        document.getElementById('gVerdict').innerHTML=vCardHTML(r,pu,'gClear',true);
+        if(!GA) return;
+        gStatus(GSTEP_LABELS[GSTEP]+': '+GSTEP_HINT[GSTEP]);
+        drawStepBar();
+      }, 600);
+    } else {
+      // All 3 collected — stop listening, evaluate
+      try{ rec.stop(); } catch(e){}
+      var pu=GDATA[0], f=GDATA[1], k=GDATA[2];
+      setTimeout(function(){
+        document.getElementById('gFare').textContent = fm(f);
+        document.getElementById('gKm').textContent   = k+'km'+(pu>0?' + '+pu+'km recogida':'');
+        document.getElementById('gVals').style.display = 'block';
+        var r = evaluate(f,k,pu);
+        RT.pending = {r:r,f:f,k:k,pu:pu};
+        document.getElementById('gVerdict').style.display = 'block';
+        document.getElementById('gVerdict').innerHTML = vCardHTML(r,pu,'gClear',true);
         GHIST.unshift({r:r,f:f,k:k,pu:pu});
-        if(GHIST.length>5)GHIST.pop();
+        if(GHIST.length>5) GHIST.pop();
         renderGHist();
         beep(r.good?'good':r.marg?'marg':'bad');
         vib(r.good?[60,40,60]:r.marg?[120]:[250,60,250]);
-        // Reset for next — wait for user to tap Acepte/Rechace
-        GSTEP=0;GDATA=[0,0,0];
-        // Don't auto-restart — wait for gClear() button tap
-      },200);
+        GSTEP=0; GDATA=[0,0,0];
+      }, 300);
     }
   };
 
-  rec.onend=function(){
-    GR=null;
-    var verdictOn=document.getElementById('gVerdict').style.display!=='none';
-    // 500ms cooldown gives Chrome time to release the mic
-    if(GA&&!verdictOn)setTimeout(gListen, 500);
-  };
-
-  rec.onerror=function(ev){
-    GR=null;
-    // Fatal: permission denied
+  rec.onerror = function(ev){
+    // Only restart on non-fatal errors
     if(ev.error==='not-allowed'||ev.error==='service-not-allowed'){
+      GR=null;
       stopGuard();
       var e=document.getElementById('gErr');
       document.getElementById('gOff').style.display='block';
       document.getElementById('gOn').style.display='none';
       e.style.display='block';
-      e.textContent='Permiso de microfono denegado. Ve a Ajustes > Apps > Chrome > Permisos > Microfono > Permitir';
+      e.textContent='Permiso denegado. Ajustes > Apps > Chrome > Permisos > Microfono > Permitir';
       return;
     }
-    // Transient errors — silent retry, no status change
-    // 'aborted','network','audio-capture' happen during Chrome cooldown period
-    var transient=['aborted','network','audio-capture'];
-    if(transient.indexOf(ev.error)>=0){
-      if(GA)setTimeout(gListen, 600);
-      return;
-    }
-    // no-speech is normal — just restart quickly
-    if(ev.error==='no-speech'){
-      if(GA)setTimeout(gListen, 150);
-      return;
-    }
-    // Only show unexpected errors
-    gStatus('Reintentando...');
-    if(GA)setTimeout(gListen, 800);
+    // no-speech in continuous mode is normal — do nothing, keep listening
+    if(ev.error==='no-speech') return;
+    // For anything else just note it but keep going
+    gStatus('...');
   };
 
-  GR=rec;
-  try{rec.start();}catch(e){
-    GR=null;
-    // InvalidStateError = Chrome not ready yet, silent retry
-    if(GA)setTimeout(gListen, 700);
+  rec.onend = function(){
+    GR = null;
+    // Only restart if guard still active and no verdict showing
+    var verdictOn = document.getElementById('gVerdict').style.display !== 'none';
+    if(GA && !verdictOn){
+      setTimeout(gListen, 800);
+    }
+  };
+
+  GR = rec;
+  try{
+    rec.start();
+  } catch(e){
+    GR = null;
+    gStatus('Iniciando...');
+    if(GA) setTimeout(gListen, 1000);
   }
 }
+
 
 function drawStepBar(){
   var el=document.getElementById('gStepBar');
@@ -693,11 +702,10 @@ function gStatus(m){document.getElementById('gStatus').textContent=m;}
 function gClear(){
   document.getElementById('gVerdict').style.display='none';
   document.getElementById('gVals').style.display='none';
-  GSTEP=0;GDATA=[0,0,0];
+  GSTEP=0; GDATA=[0,0,0];
   drawStepBar();
-  gStatus('Listo para siguiente viaje...');
-  // 1200ms: give Chrome plenty of time after verdict interaction
-  if(GA)setTimeout(gListen, 1200);
+  gStatus('Listo...');
+  if(GA) setTimeout(gListen, 800);
 }
 
 function renderGHist(){
