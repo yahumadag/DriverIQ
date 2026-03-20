@@ -377,8 +377,11 @@ function evaluate(f,k,pu){
   var effCpk=totalKm>0?fi/totalKm:cpk;
   var pickupCost=pui*CPK;
   var pickupPct=fi>0?Math.round(pickupCost/fi*100):0;
-  var good=fi>=RT.minFare&&effCpk>=RT.refCpk*0.82&&net>=RT.minNet;
-  var marg=!good&&fi>=RT.minFare*0.85&&effCpk>=RT.refCpk*0.62&&net>=1500;
+  // GOOD:     at or above reference COP/km
+  // MARGINAL: 75-99% of reference COP/km
+  // BAD:      below 75% of reference or fare too low
+  var good = fi>=RT.minFare && effCpk>=RT.refCpk      && net>=RT.minNet;
+  var marg = !good && fi>=RT.minFare*0.85 && effCpk>=RT.refCpk*0.75 && net>=1500;
   return{f:fi,k:ki,pu:pui,net:net,cpk:cpk,effCpk:effCpk,cost:costTotal,
          pickupCost:pickupCost,pickupPct:pickupPct,good:good,marg:marg};
 }
