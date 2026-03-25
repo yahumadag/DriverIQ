@@ -42,106 +42,101 @@ nav button .ic{font-size:18px;line-height:1}
 .bf{height:100%;border-radius:6px;transition:width .4s}
 .zone{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:13px;margin-bottom:9px}
 #fab{position:fixed;bottom:82px;right:16px;width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#F5A623,#F97316);color:#fff;font-size:24px;box-shadow:0 5px 18px rgba(245,166,35,0.4);z-index:49;display:none;align-items:center;justify-content:center;border:none;cursor:pointer}
-.step-box{flex:1;padding:8px 6px;border-radius:10px;text-align:center;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02)}
-.step-box.active{background:rgba(255,255,255,0.07);border-color:rgba(255,255,255,0.15)}
-.step-box.done{background:rgba(34,197,94,0.07);border-color:rgba(34,197,94,0.25)}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
 @keyframes rp{0%{transform:scale(1);opacity:.5}100%{transform:scale(2.3);opacity:0}}
 @keyframes pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .vcard{border-radius:14px;padding:16px;text-align:center;animation:pop .25s ease;margin:8px 0}
 </style>
 </head>
 <body>
 
-<!-- GUARD PAGE -->
+<!-- ═══ GUARD PAGE ═══════════════════════════════════════════════════════ -->
 <div id="p-guard" class="page show">
+
+  <!-- Header -->
   <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0 14px">
     <div style="display:flex;align-items:center;gap:8px">
-      <span style="font-size:20px">&#x1F695;</span>
+      <span style="font-size:20px">🚕</span>
       <span style="font-size:18px;font-weight:800">Drive<span style="color:#F5A623">IQ</span></span>
-      <span id="gBadge" style="display:none;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(34,197,94,0.15);color:#4ADE80;border:1px solid rgba(34,197,94,0.3)">&#9679; VIVO</span>
+      <span id="gBadge" style="display:none;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(34,197,94,0.15);color:#4ADE80;border:1px solid rgba(34,197,94,0.3)">● VIVO</span>
     </div>
     <div style="display:flex;align-items:center;gap:8px">
       <span id="gTimer" style="display:none;font-family:monospace;font-size:12px;color:#4ADE80"></span>
-      <span style="font-size:11px;color:#4ADE80">&#9889; $118/km</span>
+      <span style="font-size:11px;color:#4ADE80">⚡ $118/km</span>
     </div>
   </div>
 
-  <!-- OFF -->
+  <!-- OFF state -->
   <div id="gOff">
-    <div style="display:flex;flex-direction:column;align-items:center;padding:16px 0 20px">
-      <button id="btnActivate" onclick="startGuard()" style="width:150px;height:150px;border-radius:50%;background:linear-gradient(145deg,#1a1200,#2d1f00);border:2px solid rgba(245,166,35,0.5);box-shadow:0 0 36px rgba(245,166,35,0.15);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;position:relative;z-index:2">
-        <span style="font-size:40px;line-height:1">&#x1F399;&#xFE0F;</span>
+    <!-- Big activate button — NO position:absolute children blocking it -->
+    <div style="display:flex;flex-direction:column;align-items:center;padding:20px 0 24px">
+      <button id="btnActivate" style="width:156px;height:156px;border-radius:50%;background:linear-gradient(145deg,#1a1200,#2d1f00);border:2px solid rgba(245,166,35,0.5);box-shadow:0 0 40px rgba(245,166,35,0.15);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;position:relative;z-index:2">
+        <span style="font-size:42px;line-height:1">🎙️</span>
         <span style="font-size:13px;font-weight:800;color:#F5A623;letter-spacing:1px">ACTIVAR</span>
-        <span style="font-size:10px;color:#78716C">MODO GUARDIA</span>
+        <span style="font-size:10px;color:#78716C;letter-spacing:.5px">MODO GUARDIA</span>
       </button>
+      <!-- Decorative rings BEHIND button, pointer-events:none -->
+      <div style="position:absolute;width:188px;height:188px;border-radius:50%;border:1px solid rgba(245,166,35,0.15);pointer-events:none;margin-top:-172px"></div>
+      <div style="position:absolute;width:220px;height:220px;border-radius:50%;border:1px solid rgba(245,166,35,0.08);pointer-events:none;margin-top:-172px"></div>
     </div>
-    <div style="text-align:center;margin-bottom:16px;padding:0 8px">
-      <div style="font-size:15px;font-weight:700;margin-bottom:6px">Escucha en 3 pasos</div>
-      <div style="font-size:12px;color:#64748B;line-height:1.6">La app te pide cada dato por separado — solo di un numero por vez.</div>
+
+    <div style="text-align:center;margin-bottom:20px;padding:0 8px">
+      <div style="font-size:15px;font-weight:700;margin-bottom:6px">Escucha continua de viajes</div>
+      <div style="font-size:13px;color:#64748B;line-height:1.6">Activa y di los números de la solicitud — la app decide sola con sonido y vibración.</div>
     </div>
-    <div class="card" style="font-size:12px;color:#94A3B8">
-      <div class="sml" style="margin-bottom:10px">Flujo de captura</div>
-      <div style="display:flex;flex-direction:column;gap:7px">
-        <div style="padding:8px 10px;border-radius:8px;background:rgba(96,165,250,0.07);border:1px solid rgba(96,165,250,0.2)">
-          <span style="color:#60A5FA;font-weight:700">Paso 1 &#x1F4CD;</span> Km de recogida<br>
-          <span style="font-size:10px;color:#475569">Ej: "tres" &#x2014; o "cero" si ya est&#xE1; cerca</span>
-        </div>
-        <div style="padding:8px 10px;border-radius:8px;background:rgba(245,166,35,0.07);border:1px solid rgba(245,166,35,0.2)">
-          <span style="color:#F5A623;font-weight:700">Paso 2 &#x1F4B0;</span> Tarifa del viaje<br>
-          <span style="font-size:10px;color:#475569">Ej: "quince" o "quince mil"</span>
-        </div>
-        <div style="padding:8px 10px;border-radius:8px;background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.2)">
-          <span style="color:#4ADE80;font-weight:700">Paso 3 &#x1F4CF;</span> Km del recorrido<br>
-          <span style="font-size:10px;color:#475569">Ej: "siete" u "ocho"</span>
-        </div>
-      </div>
-      <div style="margin-top:10px;padding:8px;background:rgba(245,166,35,0.06);border-radius:8px;border:1px solid rgba(245,166,35,0.15);font-size:11px">
-        M&#xED;n: <b style="color:#F5A623">$12.000</b> &#xB7; Ref: <b style="color:#F5A623">$2.000/km</b> efectivo<br>
-        <span style="color:#64748B">La recogida se descuenta del an&#xE1;lisis</span>
-      </div>
+
+    <div class="card" style="font-size:12px;color:#94A3B8;line-height:2">
+      <div style="font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Cómo hablar</div>
+      <b style="color:#F5A623">"doce, siete"</b> → $12.000 · 7km<br>
+      <b style="color:#F5A623">"quince cinco"</b> → $15.000 · 5km<br>
+      <b style="color:#F5A623">"veinte mil, ocho"</b> → $20.000 · 8km<br>
+      <b style="color:#F5A623">"18 6"</b> → $18.000 · 6km
     </div>
-    <div id="gErr" style="display:none;margin-top:10px;padding:12px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:10px;font-size:12px;color:#F87171;line-height:1.6"></div>
+
+    <div id="gErr" style="display:none;margin-top:12px;padding:12px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:10px;font-size:12px;color:#F87171;line-height:1.5"></div>
   </div>
 
-  <!-- ON -->
+  <!-- ON state -->
   <div id="gOn" style="display:none">
-    <div style="display:flex;justify-content:center;padding:14px 0 8px;position:relative">
-      <div style="position:absolute;width:100px;height:100px;border-radius:50%;border:1px solid rgba(34,197,94,0.2);animation:rp 2s ease-out infinite;pointer-events:none;top:8px"></div>
-      <div style="position:absolute;width:100px;height:100px;border-radius:50%;border:1px solid rgba(34,197,94,0.12);animation:rp 2s ease-out infinite;animation-delay:.7s;pointer-events:none;top:8px"></div>
-      <div style="width:72px;height:72px;border-radius:50%;background:radial-gradient(circle,rgba(34,197,94,0.18),rgba(34,197,94,0.03));border:2px solid rgba(34,197,94,0.4);display:flex;align-items:center;justify-content:center">
-        <span style="font-size:30px;animation:pulse 2s ease-in-out infinite">&#x1F399;&#xFE0F;</span>
+    <!-- Mic orb -->
+    <div style="display:flex;justify-content:center;padding:16px 0 10px;position:relative">
+      <div style="position:absolute;width:112px;height:112px;border-radius:50%;border:1px solid rgba(34,197,94,0.2);animation:rp 2s ease-out infinite;pointer-events:none;top:10px"></div>
+      <div style="position:absolute;width:112px;height:112px;border-radius:50%;border:1px solid rgba(34,197,94,0.15);animation:rp 2s ease-out infinite;animation-delay:.6s;pointer-events:none;top:10px"></div>
+      <div style="width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,rgba(34,197,94,0.2),rgba(34,197,94,0.04));border:2px solid rgba(34,197,94,0.4);display:flex;align-items:center;justify-content:center">
+        <span style="font-size:34px;animation:pulse 2s ease-in-out infinite">🎙️</span>
       </div>
     </div>
+    <div id="gStatus" style="font-size:13px;color:#4ADE80;font-weight:600;text-align:center;padding:8px 16px;min-height:38px">🎙️ Escuchando...</div>
 
-    <!-- 3-step progress bar -->
-    <div id="gStepBar" style="display:flex;gap:6px;margin:8px 0 4px"></div>
-
-    <div id="gStatus" style="font-size:13px;color:#4ADE80;font-weight:600;text-align:center;padding:6px 16px;min-height:32px">Iniciando...</div>
-
-    <div id="gVals" style="display:none;margin-bottom:8px">
+    <!-- Heard values -->
+    <div id="gVals" style="display:none;margin-bottom:10px">
       <div class="g2">
         <div style="background:rgba(245,166,35,0.07);border:1px solid rgba(245,166,35,0.18);border-radius:10px;padding:10px;text-align:center">
           <div class="sml">Tarifa</div>
-          <div id="gFare" class="mono" style="font-size:18px;font-weight:800;color:#F5A623">-</div>
+          <div id="gFare" class="mono" style="font-size:20px;font-weight:800;color:#F5A623">—</div>
         </div>
         <div style="background:rgba(96,165,250,0.07);border:1px solid rgba(96,165,250,0.18);border-radius:10px;padding:10px;text-align:center">
           <div class="sml">Km</div>
-          <div id="gKm" class="mono" style="font-size:14px;font-weight:800;color:#60A5FA">-</div>
+          <div id="gKm" class="mono" style="font-size:20px;font-weight:800;color:#60A5FA">—</div>
         </div>
       </div>
     </div>
 
+    <!-- Verdict -->
     <div id="gVerdict" style="display:none"></div>
 
-    <div id="gHist" style="display:none;margin-bottom:8px">
-      <div class="sml" style="margin-bottom:5px">Ultimas</div>
+    <!-- History strip -->
+    <div id="gHist" style="display:none;margin-bottom:10px">
+      <div class="sml" style="margin-bottom:6px">Últimas</div>
       <div id="gHistList" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px"></div>
     </div>
 
-    <div id="rtPanel" class="card" style="padding:10px;margin-bottom:8px"></div>
+    <!-- RT analytics panel -->
+    <div id="rtPanel" class="card" style="padding:10px;margin-bottom:10px"></div>
 
-    <div class="card" style="padding:10px;margin-bottom:8px">
+    <!-- Today stats -->
+    <div class="card" style="padding:10px;margin-bottom:10px">
       <div class="g3">
         <div style="text-align:center"><div class="sml">Hoy bruto</div><div id="tInc" class="mono amber" style="font-size:12px;font-weight:800">$0</div></div>
         <div style="text-align:center"><div class="sml">Hoy neto</div><div id="tNet" class="mono green" style="font-size:12px;font-weight:800">$0</div></div>
@@ -149,63 +144,62 @@ nav button .ic{font-size:18px;line-height:1}
       </div>
     </div>
 
-    <div id="battW" class="card" style="padding:12px;margin-bottom:8px"></div>
-    <button class="btn btn-d" onclick="stopGuard()">&#x23F9; Detener guardia</button>
+    <!-- Battery widget -->
+    <div id="battW" class="card" style="padding:12px;margin-bottom:10px"></div>
+
+    <button class="btn btn-d" onclick="stopGuard()">⏹ Detener guardia</button>
   </div>
 </div>
 
-<!-- FILTER PAGE -->
+<!-- ═══ FILTER PAGE ══════════════════════════════════════════════════════ -->
 <div id="p-filter" class="page">
   <div style="background:rgba(245,166,35,0.07);border:1px solid rgba(245,166,35,0.18);border-radius:11px;padding:11px;margin-bottom:14px;font-size:12px;color:#94A3B8">
-    &#x26A1; Eval&#xFA;a un viaje: recogida &#xB7; tarifa &#xB7; km servicio
+    ⚡ Evalúa un viaje antes de aceptarlo
   </div>
-  <div class="g3" style="margin-bottom:10px">
-    <button id="fTab0" onclick="fGoStep(0)" style="padding:9px;border-radius:10px;border:2px solid #60A5FA;background:rgba(96,165,250,0.08);text-align:center">
-      <div class="sml">Recogida</div><div id="fV0" class="mono" style="font-size:16px;font-weight:800;color:#60A5FA">-</div>
+  <div class="g2" style="margin-bottom:10px">
+    <button id="fTab0" onclick="fGoStep(0)" style="padding:10px;border-radius:10px;border:2px solid #F5A623;background:rgba(245,166,35,0.08);text-align:center">
+      <div class="sml">Tarifa</div><div id="fV0" class="mono" style="font-size:20px;font-weight:800;color:#F5A623">—</div>
     </button>
-    <button id="fTab1" onclick="fGoStep(1)" style="padding:9px;border-radius:10px;border:2px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);text-align:center">
-      <div class="sml">Tarifa</div><div id="fV1" class="mono" style="font-size:16px;font-weight:800;color:#334155">-</div>
-    </button>
-    <button id="fTab2" onclick="fGoStep(2)" style="padding:9px;border-radius:10px;border:2px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);text-align:center">
-      <div class="sml">Km</div><div id="fV2" class="mono" style="font-size:16px;font-weight:800;color:#334155">-</div>
+    <button id="fTab1" onclick="fGoStep(1)" style="padding:10px;border-radius:10px;border:2px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);text-align:center">
+      <div class="sml">Km</div><div id="fV1" class="mono" style="font-size:20px;font-weight:800;color:#334155">—</div>
     </button>
   </div>
-  <div id="fDisp" style="background:rgba(255,255,255,0.05);border:1px solid rgba(96,165,250,0.3);border-radius:10px;padding:12px 14px;font-size:24px;font-weight:800;font-family:monospace;margin-bottom:8px;min-height:52px;display:flex;align-items:center;color:#60A5FA">0</div>
+  <div id="fDisp" style="background:rgba(255,255,255,0.05);border:1px solid rgba(245,166,35,0.3);border-radius:10px;padding:12px 14px;font-size:24px;font-weight:800;font-family:monospace;margin-bottom:8px;min-height:52px;display:flex;align-items:center;color:#F5A623">0</div>
   <div id="fNp" class="np"></div>
   <div id="fRes"></div>
-  <div style="margin-top:14px">
-    <div class="sml" style="margin-bottom:8px">Perfiles r&#xE1;pidos</div>
+  <div style="margin-top:16px">
+    <div class="sml" style="margin-bottom:8px">Perfiles rápidos</div>
     <div class="g2">
-      <button onclick="fPreset(2,12000,5)"  style="padding:9px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);text-align:left;cursor:pointer"><div style="font-size:12px;font-weight:700">Viaje corto</div><div style="font-size:10px;color:#475569">2km &#xB7; $12.000 &#xB7; 5km</div></button>
-      <button onclick="fPreset(3,15000,7)"  style="padding:9px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);text-align:left;cursor:pointer"><div style="font-size:12px;font-weight:700">Media ciudad</div><div style="font-size:10px;color:#475569">3km &#xB7; $15.000 &#xB7; 7km</div></button>
-      <button onclick="fPreset(4,28000,15)" style="padding:9px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);text-align:left;cursor:pointer"><div style="font-size:12px;font-weight:700">Viaje largo</div><div style="font-size:10px;color:#475569">4km &#xB7; $28.000 &#xB7; 15km</div></button>
-      <button onclick="fPreset(5,45000,22)" style="padding:9px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);text-align:left;cursor:pointer"><div style="font-size:12px;font-weight:700">Aeropuerto</div><div style="font-size:10px;color:#475569">5km &#xB7; $45.000 &#xB7; 22km</div></button>
+      <button onclick="fPreset(9000,3)"  style="padding:9px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);text-align:left;cursor:pointer"><div style="font-size:12px;font-weight:700">Viaje corto</div><div style="font-size:10px;color:#475569">$9.000 · 3km</div></button>
+      <button onclick="fPreset(15000,7)" style="padding:9px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);text-align:left;cursor:pointer"><div style="font-size:12px;font-weight:700">Media ciudad</div><div style="font-size:10px;color:#475569">$15.000 · 7km</div></button>
+      <button onclick="fPreset(28000,15)"style="padding:9px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);text-align:left;cursor:pointer"><div style="font-size:12px;font-weight:700">Viaje largo</div><div style="font-size:10px;color:#475569">$28.000 · 15km</div></button>
+      <button onclick="fPreset(45000,22)"style="padding:9px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);text-align:left;cursor:pointer"><div style="font-size:12px;font-weight:700">Aeropuerto</div><div style="font-size:10px;color:#475569">$45.000 · 22km</div></button>
     </div>
   </div>
 </div>
 
-<!-- DASHBOARD PAGE -->
+<!-- ═══ DASHBOARD PAGE ════════════════════════════════════════════════════ -->
 <div id="p-dash" class="page">
   <div id="dFilters" style="display:flex;gap:8px;margin-bottom:14px"></div>
   <div id="dStats" class="g2" style="margin-bottom:14px"></div>
   <div id="dPlat"></div>
 </div>
 
-<!-- TRIPS PAGE -->
+<!-- ═══ TRIPS PAGE ════════════════════════════════════════════════════════ -->
 <div id="p-trips" class="page">
-  <div id="tCount2" class="sml" style="margin-bottom:12px">0 viajes</div>
+  <div id="tCount" class="sml" style="margin-bottom:12px">0 viajes</div>
   <div id="tList"></div>
 </div>
 
-<!-- ZONES PAGE -->
+<!-- ═══ ZONES PAGE ════════════════════════════════════════════════════════ -->
 <div id="p-zones" class="page">
   <div style="background:rgba(245,166,35,0.07);border:1px solid rgba(245,166,35,0.15);border-radius:10px;padding:10px;margin-bottom:14px;font-size:11px;color:#94A3B8">
-    &#x1F4A1; Zonas de alta demanda &#x2014; Cartagena de Indias
+    💡 Zonas de alta demanda — Cartagena de Indias
   </div>
   <div id="zList"></div>
 </div>
 
-<!-- EXPENSES PAGE -->
+<!-- ═══ EXPENSES PAGE ════════════════════════════════════════════════════ -->
 <div id="p-exp" class="page">
   <div class="card" style="text-align:center;margin-bottom:14px">
     <div class="sml">Total Gastos</div>
@@ -214,483 +208,429 @@ nav button .ic{font-size:18px;line-height:1}
   <div id="eList"></div>
 </div>
 
+<!-- NAV -->
 <nav>
-  <button class="on" id="nb-guard"  onclick="goPage('guard')"> <span class="ic">&#x1F6E1;&#xFE0F;</span>GUARDIA</button>
-  <button id="nb-filter" onclick="goPage('filter')"><span class="ic">&#x1F3AF;</span>FILTRAR</button>
-  <button id="nb-dash"   onclick="goPage('dash')">  <span class="ic">&#x1F4CA;</span>STATS</button>
-  <button id="nb-trips"  onclick="goPage('trips')"> <span class="ic">&#x1F5C2;&#xFE0F;</span>VIAJES</button>
-  <button id="nb-zones"  onclick="goPage('zones')"> <span class="ic">&#x1F5FA;&#xFE0F;</span>ZONAS</button>
-  <button id="nb-exp"    onclick="goPage('exp')">   <span class="ic">&#x1F4B8;</span>GASTOS</button>
+  <button class="on" id="nb-guard"   onclick="goPage('guard')">  <span class="ic">🛡️</span>GUARDIA</button>
+  <button id="nb-filter"  onclick="goPage('filter')"> <span class="ic">🎯</span>FILTRAR</button>
+  <button id="nb-dash"    onclick="goPage('dash')">   <span class="ic">📊</span>STATS</button>
+  <button id="nb-trips"   onclick="goPage('trips')">  <span class="ic">🗂️</span>VIAJES</button>
+  <button id="nb-zones"   onclick="goPage('zones')">  <span class="ic">🗺️</span>ZONAS</button>
+  <button id="nb-exp"     onclick="goPage('exp')">    <span class="ic">💸</span>GASTOS</button>
 </nav>
+
 <button id="fab">+</button>
 
 <!-- MODALS -->
 <div id="mTrip" class="modal">
   <div class="modal-box">
-    <div class="row" style="margin-bottom:16px"><h3 style="font-size:16px;font-weight:800">Registrar Viaje</h3><button onclick="closeModal('mTrip')" style="font-size:22px;color:#64748B;background:none;border:none;cursor:pointer">&#x2715;</button></div>
+    <div class="row" style="margin-bottom:16px"><h3 style="font-size:16px;font-weight:800">➕ Registrar Viaje</h3><button onclick="closeModal('mTrip')" style="font-size:22px;color:#64748B;background:none;border:none;cursor:pointer">✕</button></div>
     <div class="fld"><label>Plataforma</label><select id="mTP"><option value="uber">Uber</option><option value="indriver">inDriver</option><option value="didi">DiDi</option></select></div>
     <div class="fld"><label>Tarifa (COP)</label><input type="number" id="mTF" placeholder="Ej: 18000"></div>
-    <div class="fld"><label>Km recogida</label><input type="number" id="mTPU" placeholder="Ej: 2"></div>
-    <div class="fld"><label>Km servicio</label><input type="number" id="mTK" placeholder="Ej: 7"></div>
+    <div class="fld"><label>Kilómetros</label><input type="number" id="mTK" placeholder="Ej: 7.5"></div>
     <div class="fld"><label>Propina (opcional)</label><input type="number" id="mTT" placeholder="Ej: 2000"></div>
     <button class="btn btn-p" onclick="saveTrip()" style="margin-top:4px">Guardar viaje</button>
   </div>
 </div>
+
 <div id="mExp" class="modal">
   <div class="modal-box">
-    <div class="row" style="margin-bottom:16px"><h3 style="font-size:16px;font-weight:800">Registrar Gasto</h3><button onclick="closeModal('mExp')" style="font-size:22px;color:#64748B;background:none;border:none;cursor:pointer">&#x2715;</button></div>
+    <div class="row" style="margin-bottom:16px"><h3 style="font-size:16px;font-weight:800">💸 Registrar Gasto</h3><button onclick="closeModal('mExp')" style="font-size:22px;color:#64748B;background:none;border:none;cursor:pointer">✕</button></div>
     <div class="fld"><label>Tipo</label>
-      <select id="mEType"><option value="carga">Carga electrica</option><option value="mant">Mantenimiento</option><option value="lavado">Lavado</option><option value="llantas">Llantas</option><option value="multa">Multa</option><option value="seguro">Seguro</option><option value="otro">Otro</option></select>
+      <select id="mEType"><option value="carga">⚡ Carga eléctrica</option><option value="mant">🔧 Mantenimiento</option><option value="lavado">🚿 Lavado</option><option value="llantas">🔄 Llantas</option><option value="multa">📄 Multa</option><option value="seguro">🛡️ Seguro</option><option value="otro">📦 Otro</option></select>
     </div>
     <div class="fld"><label>Monto (COP)</label><input type="number" id="mEAmt" placeholder="Ej: 50000"></div>
-    <div class="fld"><label>Descripcion</label><input type="text" id="mEDesc" placeholder="Ej: Carga completa"></div>
+    <div class="fld"><label>Descripción</label><input type="text" id="mEDesc" placeholder="Ej: Carga completa"></div>
     <button class="btn btn-p" onclick="saveExp()" style="margin-top:4px">Guardar gasto</button>
   </div>
 </div>
 
 <script>
-// Catch JS errors visibly
-window.onerror = function(msg,src,line){
-  var d=document.createElement('div');
-  d.style.cssText='position:fixed;top:0;left:0;right:0;background:#7F1D1D;color:#FCA5A5;padding:8px 12px;font-size:11px;font-family:monospace;z-index:9999';
-  d.textContent='Error L'+line+': '+msg;
-  document.body.appendChild(d);
+// ═══════════════════════════════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════════════════════════════
+var CPK   = 907 * 13 / 100;  // ~117.9 COP/km  Air-e Cartagena 2025
+var RANGE = 310;              // km  BYD Yuan UP real urban range
+var BKWH  = 45;               // kWh battery
+var KWHP  = 907;              // COP/kWh
+
+var PLATS = {
+  uber:     {n:'Uber',     bg:'#111111'},
+  indriver: {n:'inDriver', bg:'#00D26A'},
+  didi:     {n:'DiDi',     bg:'#FF6633'}
 };
 
-// ── Constants ─────────────────────────────────────────────────────────────
-var CPK   = 117.91;
-var RANGE = 310;
-var BKWH  = 45;
-var KWHP  = 907;
-var PLATS = {uber:{n:'Uber',bg:'#111'},indriver:{n:'inDriver',bg:'#00D26A'},didi:{n:'DiDi',bg:'#FF6633'}};
 var ZONES = [
-  {n:'Bocagrande / Castillogrande',p:['07:00-09:00','17:00-20:00','22:00-01:00'],t:'Hoteles + Turismo + Rumba',d:98},
-  {n:'Aeropuerto Rafael Nunez',    p:['04:30-07:00','11:00-13:00','18:00-21:00'],t:'Viajeros - tarifas altas',  d:95},
-  {n:'El Laguito / Marbella',      p:['08:00-10:00','18:00-21:00'],              t:'Residencial premium',       d:88},
-  {n:'Centro Historico / Getsemanı',p:['09:00-12:00','19:00-23:00'],             t:'Turismo + vida nocturna',   d:85},
-  {n:'Manga / Crespo',             p:['07:00-09:00','17:00-19:30'],              t:'Oficinas + residencial',    d:75},
-  {n:'Pie de la Popa / Zaragocilla',p:['06:30-08:30','12:00-14:00','17:00-19:00'],t:'Universidades + comercio', d:70},
-  {n:'Ternera / Villa Country',    p:['07:00-09:00','17:30-20:00'],              t:'Zona norte residencial',    d:65},
-  {n:'La Boquilla / Zona Norte',   p:['10:00-14:00','18:00-22:00'],             t:'Playas + turismo',          d:60}
+  {n:'Bocagrande / Castillogrande', p:['07:00-09:00','17:00-20:00','22:00-01:00'], t:'Hoteles + Turismo + Rumba', d:98},
+  {n:'Aeropuerto Rafael Núñez',     p:['04:30-07:00','11:00-13:00','18:00-21:00'], t:'Viajeros — tarifas altas',  d:95},
+  {n:'El Laguito / Marbella',       p:['08:00-10:00','18:00-21:00'],               t:'Residencial premium',       d:88},
+  {n:'Centro Histórico / Getsemaní',p:['09:00-12:00','19:00-23:00'],               t:'Turismo + vida nocturna',   d:85},
+  {n:'Manga / Crespo',              p:['07:00-09:00','17:00-19:30'],               t:'Oficinas + residencial',    d:75},
+  {n:'Pie de la Popa / Zaragocilla',p:['06:30-08:30','12:00-14:00','17:00-19:00'],t:'Universidades + comercio',  d:70},
+  {n:'Ternera / Villa Country',     p:['07:00-09:00','17:30-20:00'],               t:'Zona norte residencial',    d:65},
+  {n:'La Boquilla / Zona Norte',    p:['10:00-14:00','18:00-22:00'],               t:'Playas + turismo',          d:60}
 ];
 
-// ── Storage ───────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// STORAGE
+// ═══════════════════════════════════════════════════════════════════════════
 function ld(k,d){try{return JSON.parse(localStorage.getItem(k))||d;}catch(e){return d;}}
 function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
-var trips=ld('diq_t',[]), expenses=ld('diq_e',[]), batt=ld('diq_b',80), fDays=7;
 
-// ── Formatters ────────────────────────────────────────────────────────────
-function fm(n){return '$'+Math.round(n).toLocaleString('es-CO');}
-function fd(ts){return new Date(ts).toLocaleDateString('es-CO',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}
+var trips    = ld('diq_t',[]);
+var expenses = ld('diq_e',[]);
+var batt     = ld('diq_b',80);
+var fDays    = 7;
 
-// ── Word-to-number map ────────────────────────────────────────────────────
-var W2N={
+// ═══════════════════════════════════════════════════════════════════════════
+// FORMATTERS
+// ═══════════════════════════════════════════════════════════════════════════
+function fm(n){ return '$'+Math.round(n).toLocaleString('es-CO'); }
+function fd(ts){ return new Date(ts).toLocaleDateString('es-CO',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}); }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SMART VOICE PARSER
+// Accepts: "doce siete" | "12 7" | "quince mil, ocho" | "20 5km"
+// ═══════════════════════════════════════════════════════════════════════════
+var W2N = {
   'cero':0,'un':1,'uno':1,'una':1,'dos':2,'tres':3,'cuatro':4,'cinco':5,
   'seis':6,'siete':7,'ocho':8,'nueve':9,'diez':10,'once':11,'doce':12,
-  'trece':13,'catorce':14,'quince':15,'dieciseis':16,'diecisiete':17,
-  'dieciocho':18,'diecinueve':19,'veinte':20,'veintiuno':21,'veintidos':22,
-  'veintitres':23,'veinticuatro':24,'veinticinco':25,'veintiseis':26,
-  'veintisiete':27,'veintiocho':28,'veintinueve':29,
+  'trece':13,'catorce':14,'quince':15,'dieciseis':16,'dieciséis':16,
+  'diecisiete':17,'dieciocho':18,'diecinueve':19,
+  'veinte':20,'veintiuno':21,'veintidos':22,'veintidós':22,
+  'veintitres':23,'veintitrés':23,'veinticuatro':24,'veinticinco':25,
+  'veintiseis':26,'veintiséis':26,'veintisiete':27,'veintiocho':28,'veintinueve':29,
   'treinta':30,'cuarenta':40,'cincuenta':50,'sesenta':60,
   'setenta':70,'ochenta':80,'noventa':90,
-  'cien':100,'ciento':100,'doscientos':200,'trescientos':300,'cuatrocientos':400,
-  'quinientos':500,'seiscientos':600,'setecientos':700,'ochocientos':800,'novecientos':900,
+  'cien':100,'ciento':100,
+  'doscientos':200,'trescientos':300,'cuatrocientos':400,'quinientos':500,
+  'seiscientos':600,'setecientos':700,'ochocientos':800,'novecientos':900,
   'mil':1000
 };
 
-function wordsToNum(words){
-  var val=0,cur=0;
-  for(var i=0;i<words.length;i++){
-    var w=words[i],n=W2N[w];
-    if(n===undefined)continue;
-    if(n===1000){val+=(cur===0?1:cur)*1000;cur=0;}
-    else if(n>=100){cur+=n;}
-    else{cur+=n;}
+function wordsToNum(words) {
+  var val=0, cur=0;
+  for (var i=0; i<words.length; i++) {
+    var w=words[i], n=W2N[w];
+    if (n===undefined) continue;
+    if (n===1000) { val += (cur===0?1:cur)*1000; cur=0; }
+    else if (n>=100) { cur+=n; }
+    else { cur+=n; }
   }
   return val+cur;
 }
 
-// Extract a single number from speech text
-function extractNum(txt, isKm) {
-  var t = txt.toLowerCase()
-    .replace(/kilometros|km\b|kms\b/gi,' ')
-    .replace(/pesos|cop\b/gi,' ')
-    .replace(/[,;.:]/g,' ')
+function parseVoice(raw) {
+  var t = raw.toLowerCase()
+    .replace(/kilómetros?|kilómetro|kms?/gi,' ')
+    .replace(/pesos?|cop\b/gi,' ')
+    .replace(/[,;.]/g,' ')
     .replace(/\s+/g,' ').trim();
 
-  var tokens=t.split(' ').filter(Boolean);
-  var numbers=[];
+  var tokens = t.split(' ').filter(Boolean);
+  var numbers = [];
   var i=0;
-  while(i<tokens.length){
-    var tok=tokens[i];
-    if(['y','con','de','a','el','la','los','las','por'].indexOf(tok)>=0){i++;continue;}
-    if(tok==='cero'||tok==='0'){numbers.push(0);i++;continue;}
-    if(/^\d+$/.test(tok)){
-      var n=parseInt(tok);
-      if(i+1<tokens.length&&tokens[i+1]==='mil'){
-        n=n*1000;i+=2;
-        if(i<tokens.length&&/^\d+$/.test(tokens[i])){n+=parseInt(tokens[i]);i++;}
-      }else{i++;}
-      numbers.push(n);continue;
+
+  while (i < tokens.length) {
+    var tok = tokens[i];
+
+    // Skip connectors
+    if (tok==='y' || tok==='con' || tok==='más' || tok==='mas') { i++; continue; }
+
+    // Digit token
+    if (/^\d+$/.test(tok)) {
+      var n = parseInt(tok);
+      // "12 mil" pattern
+      if (i+1<tokens.length && tokens[i+1]==='mil') {
+        n = n*1000; i+=2;
+        // optional hundreds after: "12 mil 500" or "doce mil quinientos"
+        if (i<tokens.length && /^\d+$/.test(tokens[i])) { n+=parseInt(tokens[i]); i++; }
+        else if (i<tokens.length && W2N[tokens[i]]!==undefined) { n+=W2N[tokens[i]]; i++; }
+      } else { i++; }
+      numbers.push(n); continue;
     }
-    if(W2N[tok]!==undefined){
+
+    // Word number group
+    if (W2N[tok]!==undefined) {
       var group=[];
-      while(i<tokens.length&&(W2N[tokens[i]]!==undefined||tokens[i]==='y'||tokens[i]==='mil')){
-        group.push(tokens[i]);i++;
+      while (i<tokens.length && (W2N[tokens[i]]!==undefined || tokens[i]==='y' || tokens[i]==='mil')) {
+        group.push(tokens[i]); i++;
       }
-      var nw=wordsToNum(group);
-      if(nw>=0)numbers.push(nw);
+      var nw = wordsToNum(group);
+      if (nw>0) numbers.push(nw);
       continue;
     }
-    var emb=tok.match(/\d+/);
-    if(emb){numbers.push(parseInt(emb[0]));i++;continue;}
     i++;
   }
-  if(!numbers.length)return null;
-  var n=numbers[0];
-  if(isKm){
-    // km: small number, 0-80
-    if(n<=80)return n;
-    if(n<=100)return n; // allow up to 100km
-    return Math.round(n/1000); // e.g. "1000" -> 1
-  } else {
-    // fare: large number, multiply if small
-    if(n<=100)return n*1000;
-    return n;
+
+  if (!numbers.length) return null;
+
+  // Interpret: user says fare first (big), km second (small)
+  // If first number is small (<=100), assume it's thousands (spoken abbreviation)
+  var result=[];
+  for (var j=0; j<numbers.length; j++) {
+    var v = numbers[j];
+    if (result.length===0) {
+      // First number = fare
+      result.push(v<=100 ? v*1000 : v);
+    } else {
+      // Second number = km (should be small, 1–60)
+      result.push(v);
+    }
   }
+  return result;
 }
 
-// ── Evaluation ────────────────────────────────────────────────────────────
-var RT={
-  start:Date.now(),earn:0,km:0,count:0,
-  accepts:0,rejects:0,pending:null,
-  refCpk:2000,minFare:12000,minNet:5000,
-  hourData:{}
+// ═══════════════════════════════════════════════════════════════════════════
+// EVALUATION ENGINE  (dynamic thresholds)
+// ═══════════════════════════════════════════════════════════════════════════
+var RT = {
+  start: Date.now(), earn:0, km:0, count:0,
+  accepts:0, rejects:0,
+  pending: null,
+  refCpk: 2000,    // COP/km reference — auto-adjusts
+  minFare: 12000,  // minimum fare
+  minNet: 5000,    // minimum net profit
+  hourData: {}
 };
 
-function evaluate(f,k,pu){
-  var fi=parseFloat(f)||0, ki=parseFloat(k)||0, pui=parseFloat(pu)||0;
-  var totalKm=pui+ki;
-  var costTotal=totalKm*CPK;
-  var net=fi-costTotal;
-  var cpk=ki>0?fi/ki:0;
-  var effCpk=totalKm>0?fi/totalKm:cpk;
-  var pickupCost=pui*CPK;
-  var pickupPct=fi>0?Math.round(pickupCost/fi*100):0;
-  // GOOD:     at or above reference COP/km
-  // MARGINAL: 75-99% of reference COP/km
-  // BAD:      below 75% of reference or fare too low
-  var good = fi>=RT.minFare && effCpk>=RT.refCpk      && net>=RT.minNet;
-  var marg = !good && fi>=RT.minFare*0.85 && effCpk>=RT.refCpk*0.75 && net>=1500;
-  return{f:fi,k:ki,pu:pui,net:net,cpk:cpk,effCpk:effCpk,cost:costTotal,
-         pickupCost:pickupCost,pickupPct:pickupPct,good:good,marg:marg};
+function evaluate(f, k) {
+  var fi=parseFloat(f)||0, ki=parseFloat(k)||0;
+  var cost=ki*CPK, net=fi-cost, cpk=ki>0?fi/ki:0;
+  // User criteria: ref=$2000/km, min fare=$12000
+  // GOOD:     cpk >= refCpk AND fare >= minFare AND net >= minNet
+  // MARGINAL: cpk >= refCpk*0.75 AND fare >= minFare*0.85 AND net >= 1500
+  var good = fi>=RT.minFare && cpk>=RT.refCpk     && net>=RT.minNet;
+  var marg = !good && fi>=10000 && cpk>=RT.refCpk*0.75 && net>=1500;
+  return {f:fi,k:ki,net:net,cpk:cpk,cost:cost,good:good,marg:marg};
 }
 
-function rtRecord(r,f,k,accepted){
-  var h=new Date().getHours();
-  if(!RT.hourData[h])RT.hourData[h]={c:0,sumCpk:0,sumNet:0,accepted:0,rejected:0,totalFare:0};
+function rtRecord(r, f, k) {
+  var h = new Date().getHours();
+  if (!RT.hourData[h]) RT.hourData[h]={c:0,sumCpk:0,sumNet:0};
   RT.hourData[h].c++;
-  RT.hourData[h].sumCpk+=r.effCpk;
-  RT.hourData[h].sumNet+=r.net;
-  RT.hourData[h].totalFare+=r.f;
-  if(accepted===true){RT.accepts++;RT.hourData[h].accepted++;}
-  else if(accepted===false){RT.rejects++;RT.hourData[h].rejected++;}
-  else{if(r.good||r.marg)RT.accepts++;else RT.rejects++;}
-  if(accepted===true||(accepted===undefined&&r.good)){
-    RT.earn+=parseFloat(f)||0;RT.km+=parseFloat(k)||0;RT.count++;
-  }
-  var tot=RT.accepts+RT.rejects;
-  if(tot>0&&tot%5===0)rtCalibrate(h);
+  RT.hourData[h].sumCpk += r.cpk;
+  RT.hourData[h].sumNet  += r.net;
+
+  if (r.good || r.marg) { RT.accepts++; }
+  else { RT.rejects++; }
+
+  if (r.good) { RT.earn += r.f; RT.km += r.k; RT.count++; }
+
+  // Recalibrate every 5 evals
+  var tot = RT.accepts + RT.rejects;
+  if (tot>0 && tot%5===0) rtCalibrate(h);
+
   rtDraw();
 }
 
-function rtCalibrate(h){
-  var hd=RT.hourData[h];
-  if(!hd||hd.c<3)return;
-  var avgCpk=hd.sumCpk/hd.c;
-  if(avgCpk>RT.refCpk*1.3){RT.refCpk=Math.min(3000,RT.refCpk+100);RT.minNet=Math.min(9000,RT.minNet+300);}
-  else if(avgCpk<RT.refCpk*0.8){RT.refCpk=Math.max(1500,RT.refCpk-80);RT.minNet=Math.max(3000,RT.minNet-200);}
-  if(avgCpk>RT.refCpk*1.5)RT.minFare=Math.min(15000,RT.minFare+500);
-  else if(avgCpk<RT.refCpk*0.7)RT.minFare=Math.max(10000,RT.minFare-500);
+function rtCalibrate(h) {
+  var hd = RT.hourData[h];
+  if (!hd || hd.c < 3) return;
+  var avgCpk = hd.sumCpk / hd.c;
+  if (avgCpk > RT.refCpk*1.3) {
+    RT.refCpk = Math.min(3000, RT.refCpk+100);
+    RT.minNet = Math.min(9000, RT.minNet+300);
+  } else if (avgCpk < RT.refCpk*0.8) {
+    RT.refCpk = Math.max(1500, RT.refCpk-80);
+    RT.minNet = Math.max(3000, RT.minNet-200);
+  }
 }
 
-function rtDraw(){
-  var el=document.getElementById('rtPanel');
-  if(!el)return;
-  var mins=Math.max(1,Math.round((Date.now()-RT.start)/60000));
-  var rate=RT.earn/mins*60;
-  var tot=RT.accepts+RT.rejects;
-  var acc=tot>0?Math.round(RT.accepts/tot*100):0;
-  var h=new Date().getHours();
-  var hd=RT.hourData[h]||{c:0,sumCpk:0,sumNet:0,accepted:0,rejected:0,totalFare:0};
-  var avgCpk=hd.c>0?hd.sumCpk/hd.c:0;
-  var hourTot=(hd.accepted||0)+(hd.rejected||0);
-  var costPerHour=RT.km>0?(RT.km/mins*60)*CPK:0;
-  var mktStatus='',mktColor='#94A3B8';
-  if(avgCpk>RT.refCpk*1.2){mktStatus='Mercado caliente';mktColor='#F87171';}
-  else if(RT.refCpk>2000){mktStatus='Mercado activo';mktColor='#F5A623';}
-  else if(RT.refCpk<2000){mktStatus='Mercado flojo';mktColor='#60A5FA';}
-  el.innerHTML=
-    '<div class="row" style="margin-bottom:8px"><span class="sml">Analisis sesion</span><span style="font-size:10px;color:#475569">'+mins+'min · '+RT.count+' aceptados</span></div>'+
-    '<div class="g3" style="margin-bottom:8px">'+
-      sBox('COP/hora',rate>0?fm(rate):'-','#F5A623')+
-      sBox('% Aceptado',acc+'%','#4ADE80')+
-      sBox('Ref/km',fm(RT.refCpk),'#60A5FA')+
+function rtDraw() {
+  var el = document.getElementById('rtPanel');
+  if (!el) return;
+  var mins = Math.max(1, Math.round((Date.now()-RT.start)/60000));
+  var rate = RT.earn/mins*60;
+  var tot  = RT.accepts+RT.rejects;
+  var acc  = tot>0 ? Math.round(RT.accepts/tot*100) : 0;
+  var changed = RT.mult !== 2.2;
+  var trend = RT.mult > 2.2 ? '📈 Mercado activo — más selectivo' : RT.mult < 2.2 ? '📉 Mercado flojo — umbral reducido' : '';
+  el.innerHTML =
+    '<div class="sml" style="margin-bottom:8px">Análisis en tiempo real</div>'+
+    '<div class="g3">'+
+      sBox('COP/hora', fm(rate), '#F5A623')+
+      sBox('Aceptados', acc+'%', '#4ADE80')+
+      sBox('Ref/km', fm(RT.refCpk), '#60A5FA')+
     '</div>'+
-    '<div class="g3" style="margin-bottom:6px">'+
-      sBox('Prom hora',avgCpk>0?fm(avgCpk)+'/km':'-',avgCpk>=RT.refCpk*0.82?'#4ADE80':'#F59E0B')+
-      sBox('Tarifa min',fm(RT.minFare),'#F5A623')+
-      sBox('Costo/h',costPerHour>0?fm(costPerHour):'-','#94A3B8')+
-    '</div>'+
-    (mktStatus?'<div style="font-size:10px;color:'+mktColor+';text-align:center;padding:4px">'+mktStatus+' - umbral: '+fm(RT.refCpk)+'/km</div>':'');
+    (trend?'<div style="margin-top:8px;font-size:10px;text-align:center;color:#94A3B8">'+trend+'</div>':'');
 }
 
 function sBox(l,v,c){
   return '<div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:7px;text-align:center">'+
     '<div class="sml">'+l+'</div>'+
-    '<div class="mono" style="font-size:12px;font-weight:800;color:'+c+'">'+v+'</div></div>';
+    '<div class="mono" style="font-size:12px;font-weight:800;color:'+c+'">'+v+'</div>'+
+    '</div>';
 }
 
-// ── Verdict cards ─────────────────────────────────────────────────────────
-function vCardHTML(r, pu, clearFnStr, showButtons) {
-  var e=r.good?'&#x2705;':r.marg?'&#x26A0;&#xFE0F;':'&#x274C;';
+// ═══════════════════════════════════════════════════════════════════════════
+// VERDICT CARD
+// ═══════════════════════════════════════════════════════════════════════════
+function vCard(r, clearFn) {
+  var e=r.good?'✅':r.marg?'⚠️':'❌';
   var w=r.good?'ACEPTA':r.marg?'MARGINAL':'RECHAZA';
   var c=r.good?'#4ADE80':r.marg?'#F59E0B':'#F87171';
   var bg=r.good?'rgba(34,197,94,.1)':r.marg?'rgba(245,158,11,.1)':'rgba(239,68,68,.1)';
   var bd=r.good?'rgba(34,197,94,.3)':r.marg?'rgba(245,158,11,.3)':'rgba(239,68,68,.3)';
-  var pct=Math.min(100,r.effCpk/(RT.refCpk*2)*100);
-  pui=parseFloat(pu)||0;
-  var puRow=pui>0
-    ?'<div style="padding:5px 9px;border-radius:7px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.17);font-size:11px;margin-bottom:5px;display:flex;justify-content:space-between">'
-     +'<span style="color:#94A3B8">Recogida: <b style="color:#F87171">'+pui+'km</b> ('+fm(r.pickupCost)+')</span>'
-     +'<span style="color:'+(r.pickupPct>25?'#F87171':'#64748B')+'">'+r.pickupPct+'% tarifa</span></div>'
-    :'';
-  var btns=showButtons
-    ?'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">'
-     +'<button onclick="userAccepted()" style="padding:10px;border-radius:10px;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.4);color:#4ADE80;font-weight:800;font-size:13px;cursor:pointer">&#x2705; Acepte</button>'
-     +'<button onclick="userRejected()" style="padding:10px;border-radius:10px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#F87171;font-weight:800;font-size:13px;cursor:pointer">&#x274C; Rechace</button>'
-     +'</div>'
-     +'<button onclick="'+clearFnStr+'()" style="margin-top:8px;width:100%;padding:8px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);color:#475569;font-size:11px;cursor:pointer">Siguiente</button>'
-    :'<button onclick="'+clearFnStr+'()" style="margin-top:10px;width:100%;padding:9px;border-radius:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#94A3B8;font-size:12px;cursor:pointer">Nuevo</button>';
-  return '<div class="vcard" style="background:'+bg+';border:2px solid '+bd+'">'
-    +'<div style="font-size:40px;line-height:1.1">'+e+'</div>'
-    +'<div class="mono" style="font-size:22px;font-weight:900;color:'+c+';margin:4px 0">'+w+'</div>'
-    +'<div class="g3" style="margin:8px 0">'
-      +sBox('Utilidad neta',fm(r.net),r.net>0?'#4ADE80':'#F87171')
-      +sBox('Costo total',fm(r.cost),'#94A3B8')
-      +sBox('Ef. COP/km',fm(r.effCpk),r.effCpk>=RT.refCpk*0.82?'#4ADE80':'#F59E0B')
-    +'</div>'
-    +puRow
-    +'<div class="bb"><div class="bf" style="width:'+pct+'%;background:'+c+'"></div></div>'
-    +'<div class="sml" style="margin-top:4px;text-align:center">Ref: '+fm(RT.refCpk)+'/km efect. - Min: '+fm(RT.minFare)+'</div>'
-    +btns+'</div>';
+  var pct=Math.min(100, r.cpk/(CPK*4)*100);
+  return '<div class="vcard" style="background:'+bg+';border:2px solid '+bd+'">'+
+    '<div style="font-size:44px;line-height:1.1">'+e+'</div>'+
+    '<div class="mono" style="font-size:24px;font-weight:900;color:'+c+';margin:6px 0">'+w+'</div>'+
+    '<div class="g3" style="margin:10px 0">'+
+      sBox('Utilidad', fm(r.net), r.net>0?'#4ADE80':'#F87171')+
+      sBox('Costo ⚡', fm(r.cost), '#4ADE80')+
+      sBox('COP/km', fm(r.cpk), r.cpk>=CPK*RT.mult?'#4ADE80':'#F59E0B')+
+    '</div>'+
+    '<div class="bb"><div class="bf" style="width:'+pct+'%;background:'+c+'"></div></div>'+
+    '<div class="sml" style="margin-top:4px;text-align:center">Ref: '+fm(RT.refCpk)+'/km</div>'+
+    '<button onclick="'+clearFn+'()" style="margin-top:10px;width:100%;padding:9px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#94A3B8;font-size:12px;cursor:pointer">Nuevo →</button>'+
+  '</div>';
 }
 
-function userAccepted(){
-  if(!RT.pending)return;
-  var p=RT.pending;RT.pending=null;
-  trips.push({ts:Date.now(),platform:'uber',fare:p.f,km:p.k,pickup:p.pu||0,tip:0,src:'guard'});
-  sv('diq_t',trips);updToday();
-  rtRecord(p.r,p.f,p.k,true);
-  gStatus('Guardado - siguiente...');gClear();
-}
-function userRejected(){
-  if(!RT.pending)return;
-  var p=RT.pending;RT.pending=null;
-  rtRecord(p.r,p.f,p.k,false);
-  gStatus('Anotado - siguiente...');gClear();
-}
-
-// ── Audio & Vibration ─────────────────────────────────────────────────────
-function beep(type){
-  try{
+// ═══════════════════════════════════════════════════════════════════════════
+// AUDIO & VIBRATION
+// ═══════════════════════════════════════════════════════════════════════════
+function beep(type) {
+  try {
     var ac=new(window.AudioContext||window.webkitAudioContext)();
-    var o=ac.createOscillator(),g=ac.createGain();
-    o.connect(g);g.connect(ac.destination);
-    if(type==='good'){o.type='sine';o.frequency.setValueAtTime(440,ac.currentTime);o.frequency.setValueAtTime(659,ac.currentTime+.1);o.frequency.setValueAtTime(880,ac.currentTime+.2);g.gain.setValueAtTime(.35,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+.5);o.start();o.stop(ac.currentTime+.5);}
-    else if(type==='marg'){o.type='triangle';o.frequency.setValueAtTime(330,ac.currentTime);g.gain.setValueAtTime(.28,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+.3);o.start();o.stop(ac.currentTime+.3);}
-    else{o.type='sawtooth';o.frequency.setValueAtTime(220,ac.currentTime);o.frequency.setValueAtTime(160,ac.currentTime+.15);g.gain.setValueAtTime(.3,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+.4);o.start();o.stop(ac.currentTime+.4);}
-  }catch(e){}
+    var o=ac.createOscillator(), g=ac.createGain();
+    o.connect(g); g.connect(ac.destination);
+    if (type==='good') {
+      o.type='sine';
+      o.frequency.setValueAtTime(440,ac.currentTime);
+      o.frequency.setValueAtTime(659,ac.currentTime+.1);
+      o.frequency.setValueAtTime(880,ac.currentTime+.2);
+      g.gain.setValueAtTime(.35,ac.currentTime);
+      g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+.55);
+      o.start(); o.stop(ac.currentTime+.55);
+    } else if (type==='marg') {
+      o.type='triangle';
+      o.frequency.setValueAtTime(330,ac.currentTime);
+      g.gain.setValueAtTime(.28,ac.currentTime);
+      g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+.3);
+      o.start(); o.stop(ac.currentTime+.3);
+    } else {
+      o.type='sawtooth';
+      o.frequency.setValueAtTime(220,ac.currentTime);
+      o.frequency.setValueAtTime(160,ac.currentTime+.15);
+      g.gain.setValueAtTime(.3,ac.currentTime);
+      g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+.45);
+      o.start(); o.stop(ac.currentTime+.45);
+    }
+  } catch(e){}
 }
-function vib(p){try{if(navigator.vibrate)navigator.vibrate(p);}catch(e){}}
+function vib(p){ try{if(navigator.vibrate)navigator.vibrate(p);}catch(e){} }
 
-// ── Guard — 3-step sequential input ──────────────────────────────────────
-var GA=false,GR=null,GTI=null,GT=0,GHIST=[];
-var GSTEP=0;       // 0=pickup, 1=fare, 2=km
-var GDATA=[0,0,0]; // [pickup_km, fare, service_km]
-var GSTEP_COLORS=['#60A5FA','#F5A623','#4ADE80'];
-var GSTEP_LABELS=['Recogida km','Tarifa COP','Km servicio'];
-var GSTEP_HINT  =['Di los km para recoger ("cero" si esta cerca)','Di la tarifa del viaje','Di los km del recorrido'];
+// ═══════════════════════════════════════════════════════════════════════════
+// GUARD MODE
+// ═══════════════════════════════════════════════════════════════════════════
+var GA=false, GR=null, GTI=null, GT=0, GHIST=[];
 
-function startGuard(){
-  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){
-    var e=document.getElementById('gErr');
-    e.style.display='block';
-    e.textContent='Reconocimiento de voz no disponible. Usa Chrome en Android.';
+// Wire button — done here not inline so no quote-nesting issues
+document.getElementById('btnActivate').addEventListener('click', startGuard);
+
+function startGuard() {
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var err = document.getElementById('gErr');
+
+  if (!SR) {
+    err.style.display='block';
+    err.textContent='❌ Reconocimiento de voz no disponible. Abre con Chrome.';
     return;
   }
-  GA=true;GSTEP=0;GDATA=[0,0,0];
+
+  // Show activity immediately
+  err.style.display='none';
+  GA = true;
   document.getElementById('gOff').style.display='none';
   document.getElementById('gOn').style.display='block';
   document.getElementById('gBadge').style.display='inline';
   document.getElementById('gTimer').style.display='inline';
-  RT.start=Date.now();RT.earn=0;RT.km=0;RT.count=0;RT.accepts=0;RT.rejects=0;
+  RT.start=Date.now(); RT.earn=0; RT.km=0; RT.count=0; RT.accepts=0; RT.rejects=0;
   GT=0;
   GTI=setInterval(function(){
     GT++;
-    var h=Math.floor(GT/3600),m=Math.floor((GT%3600)/60),s=GT%60;
-    document.getElementById('gTimer').textContent=(h?h+':':'')+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+    var h=Math.floor(GT/3600), m=Math.floor((GT%3600)/60), s=GT%60;
+    document.getElementById('gTimer').textContent=
+      (h?h+':':'')+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
   },1000);
-  renderBatt();updToday();rtDraw();drawStepBar();
-  gStatus(GSTEP_HINT[0]);
+  renderBatt(); updToday(); rtDraw();
+  gStatus('🎙️ Iniciando micrófono...');
   gListen();
 }
 
-function gListen(){
-  if(!GA) return;
-  if(GR){ try{GR.abort();}catch(e){} GR=null; }
-
+function gListen() {
+  if (!GA) return;
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   var rec;
-  try{ rec = new SR(); } catch(e){ gStatus('SR error: '+e.message); return; }
+  try { rec = new SR(); }
+  catch(e) { gStatus('⚠️ Error SR: '+e.message); if(GA)setTimeout(gListen,2000); return; }
 
-  // CONTINUOUS mode — one session for all 3 steps
-  // Chrome keeps mic open; we detect each spoken number via onresult
   rec.lang = 'es-CO';
-  rec.continuous = true;
+  rec.continuous = false;
   rec.interimResults = false;
-  rec.maxAlternatives = 5;
+  rec.maxAlternatives = 5;   // More alternatives = better recognition
 
-  rec.onstart = function(){
-    gStatus(GSTEP_LABELS[GSTEP]+': '+GSTEP_HINT[GSTEP]);
-    drawStepBar();
-  };
+  rec.onstart       = function(){ gStatus('🎙️ Escuchando — di tarifa y km...'); };
+  rec.onspeechstart = function(){ gStatus('🔊 Detectando voz...'); };
 
-  rec.onresult = function(e){
-    // Only process the latest result
-    var idx = e.resultIndex;
-    if(!e.results[idx].isFinal) return;
-
-    var alts = [];
-    for(var i=0; i<e.results[idx].length; i++){
-      alts.push(e.results[idx][i].transcript.trim());
-    }
-    var heard = alts[0]||'';
-
-    // Extract number for current step
-    var isKm = (GSTEP===0 || GSTEP===2);
-    var n = null;
-    for(var i=0; i<alts.length && n===null; i++){
-      n = extractNum(alts[i], isKm);
+  rec.onresult = function(e) {
+    var best=null;
+    // Try all alternatives with the smart parser
+    for (var i=0; i<e.results[0].length; i++) {
+      var txt = e.results[0][i].transcript.toLowerCase().trim();
+      var p   = parseVoice(txt);
+      if (p && p.length>=2){ best={txt:txt,p:p}; break; }
+      if (!best && p && p.length>=1) best={txt:txt,p:p};
     }
 
-    if(n===null){
-      gStatus('"'+heard+'" - repite');
-      return;
-    }
+    if (!best){ gStatus('❓ "'+e.results[0][0].transcript+'"'); return; }
+    gStatus('"'+best.txt+'"');
 
-    // Validate
-    if(GSTEP===0 && n>25){ gStatus('"'+heard+'" - max 25km recogida'); return; }
-    if(GSTEP===2 && n>100){ gStatus('"'+heard+'" - max 100km servicio'); return; }
-
-    // Save step value
-    GDATA[GSTEP] = n;
-    gStatus('Ok: '+(isKm ? n+'km' : fm(n)));
-    drawStepBar();
-
-    if(GSTEP < 2){
-      GSTEP++;
-      // Brief pause then prompt next step
-      setTimeout(function(){
-        if(!GA) return;
-        gStatus(GSTEP_LABELS[GSTEP]+': '+GSTEP_HINT[GSTEP]);
-        drawStepBar();
-      }, 600);
+    if (best.p.length>=2) {
+      var f=best.p[0], k=best.p[1];
+      document.getElementById('gFare').textContent = fm(f);
+      document.getElementById('gKm').textContent   = k+'km';
+      document.getElementById('gVals').style.display='block';
+      var r = evaluate(f,k);
+      document.getElementById('gVerdict').style.display='block';
+      document.getElementById('gVerdict').innerHTML=vCard(r,'gClear');
+      GHIST.unshift({r:r,f:f}); if(GHIST.length>5)GHIST.pop();
+      renderGHist();
+      beep(r.good?'good':r.marg?'marg':'bad');
+      vib(r.good?[60,40,60]:r.marg?[120]:[250,60,250]);
+      rtRecord(r,f,k);
     } else {
-      // All 3 collected — stop listening, evaluate
-      try{ rec.stop(); } catch(e){}
-      var pu=GDATA[0], f=GDATA[1], k=GDATA[2];
-      setTimeout(function(){
-        document.getElementById('gFare').textContent = fm(f);
-        document.getElementById('gKm').textContent   = k+'km'+(pu>0?' + '+pu+'km recogida':'');
-        document.getElementById('gVals').style.display = 'block';
-        var r = evaluate(f,k,pu);
-        RT.pending = {r:r,f:f,k:k,pu:pu};
-        document.getElementById('gVerdict').style.display = 'block';
-        document.getElementById('gVerdict').innerHTML = vCardHTML(r,pu,'gClear',true);
-        GHIST.unshift({r:r,f:f,k:k,pu:pu});
-        if(GHIST.length>5) GHIST.pop();
-        renderGHist();
-        beep(r.good?'good':r.marg?'marg':'bad');
-        vib(r.good?[60,40,60]:r.marg?[120]:[250,60,250]);
-        GSTEP=0; GDATA=[0,0,0];
-      }, 300);
+      gStatus('⚠️ Solo escuché: '+fm(best.p[0])+' — falta el km');
     }
   };
 
-  rec.onerror = function(ev){
-    // Only restart on non-fatal errors
-    if(ev.error==='not-allowed'||ev.error==='service-not-allowed'){
-      GR=null;
+  rec.onend = function(){ GR=null; if(GA)setTimeout(gListen,250); };
+
+  rec.onerror = function(ev) {
+    GR=null;
+    gStatus('mic: '+ev.error);
+    if (ev.error==='not-allowed'||ev.error==='service-not-allowed') {
       stopGuard();
-      var e=document.getElementById('gErr');
+      var err=document.getElementById('gErr');
       document.getElementById('gOff').style.display='block';
       document.getElementById('gOn').style.display='none';
-      e.style.display='block';
-      e.textContent='Permiso denegado. Ajustes > Apps > Chrome > Permisos > Microfono > Permitir';
+      err.style.display='block';
+      err.textContent='❌ Permiso de micrófono denegado.\n\nVe a: Ajustes del teléfono → Apps → Chrome → Permisos → Micrófono → Permitir\n\nLuego toca ACTIVAR de nuevo.';
       return;
     }
-    // no-speech in continuous mode is normal — do nothing, keep listening
-    if(ev.error==='no-speech') return;
-    // For anything else just note it but keep going
-    gStatus('...');
+    if(GA)setTimeout(gListen, ev.error==='no-speech'?200:900);
   };
 
-  rec.onend = function(){
-    GR = null;
-    // Only restart if guard still active and no verdict showing
-    var verdictOn = document.getElementById('gVerdict').style.display !== 'none';
-    if(GA && !verdictOn){
-      setTimeout(gListen, 800);
-    }
-  };
-
-  GR = rec;
-  try{
-    rec.start();
-  } catch(e){
-    GR = null;
-    gStatus('Iniciando...');
-    if(GA) setTimeout(gListen, 1000);
-  }
+  GR=rec;
+  try { rec.start(); gStatus('🎙️ Micrófono activo...'); }
+  catch(e){ GR=null; gStatus('⚠️ start: '+e.message); if(GA)setTimeout(gListen,1200); }
 }
 
-
-function drawStepBar(){
-  var el=document.getElementById('gStepBar');
-  if(!el)return;
-  var h='<div style="display:flex;gap:5px;margin:4px 0 8px">';
-  for(var i=0;i<3;i++){
-    var active=i===GSTEP,done=i<GSTEP;
-    var c=GSTEP_COLORS[i];
-    var val=done?(i===1?fm(GDATA[i]):GDATA[i]+'km'):(active?'...':'-');
-    h+='<div style="flex:1;padding:6px 4px;border-radius:8px;text-align:center;'
-      +'background:'+(active?'rgba(255,255,255,0.07)':done?'rgba(34,197,94,0.07)':'rgba(255,255,255,0.02)')
-      +';border:1px solid '+(active?c:done?'rgba(34,197,94,0.3)':'rgba(255,255,255,0.05)')+'">'
-      +'<div style="font-size:8px;color:'+(active?c:done?'#4ADE80':'#334155')+';text-transform:uppercase;letter-spacing:.5px">'+GSTEP_LABELS[i]+'</div>'
-      +'<div style="font-size:13px;font-weight:800;font-family:monospace;color:'+(active?c:done?'#4ADE80':'#475569')+'">'+val+'</div>'
-      +'</div>';
-  }
-  h+='</div>';
-  el.innerHTML=h;
-}
-
-function stopGuard(){
+function stopGuard() {
   GA=false;
   if(GR){try{GR.onend=null;GR.abort();}catch(e){}GR=null;}
   if(GTI){clearInterval(GTI);GTI=null;}
-  GT=0;GHIST=[];GSTEP=0;GDATA=[0,0,0];
+  GT=0; GHIST=[];
   document.getElementById('gOff').style.display='block';
   document.getElementById('gOn').style.display='none';
   document.getElementById('gBadge').style.display='none';
@@ -698,18 +638,11 @@ function stopGuard(){
   document.getElementById('gVals').style.display='none';
   document.getElementById('gVerdict').style.display='none';
   document.getElementById('gHist').style.display='none';
+  renderNav();
 }
 
-function gStatus(m){document.getElementById('gStatus').textContent=m;}
-
-function gClear(){
-  document.getElementById('gVerdict').style.display='none';
-  document.getElementById('gVals').style.display='none';
-  GSTEP=0; GDATA=[0,0,0];
-  drawStepBar();
-  gStatus('Listo...');
-  if(GA) setTimeout(gListen, 800);
-}
+function gStatus(m){ document.getElementById('gStatus').textContent=m; }
+function gClear(){ document.getElementById('gVerdict').style.display='none'; }
 
 function renderGHist(){
   if(!GHIST.length)return;
@@ -717,9 +650,9 @@ function renderGHist(){
   var h='';
   GHIST.forEach(function(x){
     var c=x.r.good?'rgba(34,197,94,.15)':x.r.marg?'rgba(245,158,11,.15)':'rgba(239,68,68,.15)';
-    h+='<div style="flex-shrink:0;padding:6px 10px;border-radius:8px;background:'+c+';text-align:center">'
-      +'<div style="font-size:14px">'+(x.r.good?'&#x2705;':x.r.marg?'&#x26A0;&#xFE0F;':'&#x274C;')+'</div>'
-      +'<div class="sml mono">'+fm(x.f).replace('$','')+'</div></div>';
+    h+='<div style="flex-shrink:0;padding:6px 10px;border-radius:8px;background:'+c+';text-align:center">'+
+       '<div style="font-size:14px">'+(x.r.good?'✅':x.r.marg?'⚠️':'❌')+'</div>'+
+       '<div class="sml mono">'+fm(x.f).replace('$','')+'</div></div>';
   });
   document.getElementById('gHistList').innerHTML=h;
 }
@@ -728,7 +661,7 @@ function updToday(){
   var cut=Date.now()-86400000;
   var td=trips.filter(function(t){return t.ts>=cut;});
   var inc=td.reduce(function(s,t){return s+t.fare+(t.tip||0);},0);
-  var km=td.reduce(function(s,t){return s+(t.km||0);},0);
+  var km =td.reduce(function(s,t){return s+(t.km||0);},0);
   var net=inc-km*CPK;
   document.getElementById('tInc').textContent=fm(inc);
   document.getElementById('tNet').textContent=fm(net);
@@ -736,218 +669,268 @@ function updToday(){
   document.getElementById('tCount').textContent=td.length;
 }
 
-// ── Battery ───────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// BATTERY
+// ═══════════════════════════════════════════════════════════════════════════
 function renderBatt(){
   var km=Math.round(batt/100*RANGE);
   var chg=Math.round(BKWH*(1-batt/100)*KWHP);
   var col=batt>=50?'#4ADE80':batt>=25?'#F59E0B':'#F87171';
   var grd=batt>=50?'linear-gradient(90deg,#166534,#4ADE80)':batt>=25?'linear-gradient(90deg,#78350F,#F59E0B)':'linear-gradient(90deg,#7F1D1D,#F87171)';
   document.getElementById('battW').innerHTML=
-    '<div class="row" style="margin-bottom:6px">'
-    +'<span style="font-size:12px;font-weight:700;color:#94A3B8">Bateria BYD Yuan UP</span>'
-    +'<div><span class="mono" style="font-size:18px;font-weight:900;color:'+col+'">'+batt+'%</span>'
-    +'<span class="mono blue" style="font-size:12px;margin-left:6px">'+km+'km</span></div></div>'
-    +'<div class="bb"><div class="bf" style="width:'+batt+'%;background:'+grd+'"></div></div>'
-    +'<input type="range" min="5" max="100" step="5" value="'+batt+'" oninput="updBatt(parseInt(this.value))" style="width:100%;accent-color:'+col+';margin:5px 0">'
-    +'<div class="g2" style="margin-top:6px">'
-    +sBox('Cargar 100%',fm(chg),'#4ADE80')
-    +sBox('Costo/km',fm(CPK),'#4ADE80')
-    +'</div>'
-    +(batt<=20?'<div style="margin-top:8px;padding:6px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:8px;font-size:11px;color:#F87171;text-align:center">Bateria baja - '+km+'km restantes</div>':'');
+    '<div class="row" style="margin-bottom:6px">'+
+    '<span style="font-size:12px;font-weight:700;color:#94A3B8">🔋 BYD Yuan UP</span>'+
+    '<div><span class="mono" style="font-size:18px;font-weight:900;color:'+col+'">'+batt+'%</span>'+
+    '<span class="mono blue" style="font-size:12px;margin-left:6px">'+km+'km</span></div></div>'+
+    '<div class="bb"><div class="bf" style="width:'+batt+'%;background:'+grd+'"></div></div>'+
+    '<input type="range" min="5" max="100" step="5" value="'+batt+'" '+
+    'oninput="updBatt(parseInt(this.value))" '+
+    'style="width:100%;accent-color:'+col+';margin:5px 0">'+
+    '<div class="g2" style="margin-top:6px">'+
+    sBox('Cargar 100%',fm(chg),'#4ADE80')+
+    sBox('Costo/km',fm(CPK),'#4ADE80')+
+    '</div>'+
+    (batt<=20?'<div style="margin-top:8px;padding:6px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:8px;font-size:11px;color:#F87171;text-align:center">⚠️ Batería baja — '+km+'km restantes</div>':'');
 }
-function updBatt(v){batt=v;sv('diq_b',batt);renderBatt();}
+function updBatt(v){ batt=v; sv('diq_b',batt); renderBatt(); }
 
-// ── Filter ────────────────────────────────────────────────────────────────
-var fVals=[null,null,null],fStep=0; // [pickup, fare, km]
-var fCols=['#60A5FA','#F5A623','#4ADE80'];
+// ═══════════════════════════════════════════════════════════════════════════
+// FILTER (quick decide)
+// ═══════════════════════════════════════════════════════════════════════════
+var fVals=[null,null], fStep=0;
 
 (function(){
-  var d=['1','2','3','4','5','6','7','8','9','&#x232B;','0','&#x2192;'],h='';
+  var d=['1','2','3','4','5','6','7','8','9','⌫','0','→'];
+  var h='';
   d.forEach(function(k,i){
-    var raw=['1','2','3','4','5','6','7','8','9','DEL','0','GO'][i];
-    var s=raw==='GO'?'background:rgba(245,166,35,0.15);border-color:rgba(245,166,35,0.4);color:#F5A623':
-           raw==='DEL'?'background:rgba(239,68,68,0.08);color:#F87171':'';
-    h+='<button class="npb" style="'+s+'" data-k="'+raw+'">'+k+'</button>';
+    var s=k==='→'?'background:rgba(245,166,35,0.15);border-color:rgba(245,166,35,0.4);color:#F5A623':
+           k==='⌫'?'background:rgba(239,68,68,0.08);color:#F87171':'';
+    h+='<button class="npb" style="'+s+'" data-k="'+k+'">'+k+'</button>';
   });
   document.getElementById('fNp').innerHTML=h;
   document.getElementById('fNp').addEventListener('click',function(e){
-    var k=e.target.closest('[data-k]');
-    if(!k)return;
-    fKey(k.dataset.k);
+    var k=e.target.dataset.k; if(!k)return; fKey(k);
   });
 })();
 
-function fGoStep(s){fStep=s;fDrawUI();}
+function fGoStep(s){ fStep=s; fDrawUI(); }
 
 function fKey(k){
-  if(k==='GO'){if(fStep<2)fGoStep(fStep+1);else fRun();return;}
-  if(k==='DEL'){fVals[fStep]=fVals[fStep]&&fVals[fStep].length>1?fVals[fStep].slice(0,-1):null;}
-  else{var cur=fVals[fStep]||'';if(cur.length>=6)return;fVals[fStep]=cur+k;}
+  if(k==='→'){ fStep===0?fGoStep(1):fRun(); return; }
+  if(k==='⌫'){
+    var v=fVals[fStep];
+    fVals[fStep]=v&&v.length>1?v.slice(0,-1):null;
+  } else {
+    var cur=fVals[fStep]||'';
+    if(cur.length>=6)return;
+    fVals[fStep]=cur+k;
+  }
   fDrawUI();
 }
 
 function fDrawUI(){
-  var c=fCols[fStep];
+  var cols=['#F5A623','#60A5FA'];
+  var c=cols[fStep];
   var disp=document.getElementById('fDisp');
-  disp.textContent=fVals[fStep]||'0';disp.style.color=c;disp.style.borderColor=c+'44';
-  [0,1,2].forEach(function(i){
-    var tb=document.getElementById('fTab'+i),vd=document.getElementById('fV'+i);
-    if(!tb||!vd)return;
-    tb.style.borderColor=fStep===i?fCols[i]:'rgba(255,255,255,.08)';
-    tb.style.background=fStep===i?fCols[i]+'18':'rgba(255,255,255,.03)';
-    vd.style.color=fVals[i]?fCols[i]:'#334155';
-    if(i===0)vd.textContent=fVals[i]?fVals[i]+'km':'-';
-    else if(i===1)vd.textContent=fVals[i]?'$'+parseInt(fVals[i]).toLocaleString('es-CO'):'-';
-    else vd.textContent=fVals[i]?fVals[i]+'km':'-';
+  disp.textContent=fVals[fStep]||'0'; disp.style.color=c; disp.style.borderColor=c+'44';
+  [0,1].forEach(function(i){
+    var tb=document.getElementById('fTab'+i), vd=document.getElementById('fV'+i);
+    tb.style.borderColor=fStep===i?cols[i]:'rgba(255,255,255,.08)';
+    tb.style.background =fStep===i?cols[i]+'18':'rgba(255,255,255,.03)';
+    vd.textContent=(fVals[i]||'—')+(i===1&&fVals[i]?'km':'');
+    vd.style.color=fVals[i]?cols[i]:'#334155';
   });
 }
 
 function fRun(){
-  var pu=fVals[0]||'0',f=fVals[1],k=fVals[2];
-  if(!f||!k)return;
-  var r=evaluate(f,k,pu);
-  document.getElementById('fRes').innerHTML=vCardHTML(r,pu,'fClear',false);
+  if(!fVals[0]||!fVals[1])return;
+  var r=evaluate(fVals[0],fVals[1]);
+  document.getElementById('fRes').innerHTML=vCard(r,'fClear');
   beep(r.good?'good':r.marg?'marg':'bad');
   vib(r.good?[60,40,60]:r.marg?[120]:[250,60,250]);
 }
-function fClear(){fVals=[null,null,null];fStep=0;fDrawUI();document.getElementById('fRes').innerHTML='';}
-function fPreset(pu,f,k){fVals=[String(pu),String(f),String(k)];fStep=0;fDrawUI();fRun();}
+function fClear(){ fVals=[null,null]; fStep=0; fDrawUI(); document.getElementById('fRes').innerHTML=''; }
+function fPreset(f,k){ fVals=[String(f),String(k)]; fStep=0; fDrawUI(); fRun(); }
 
-// ── Navigation ────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════════════════
 var PAGES=['guard','filter','dash','trips','zones','exp'];
+
 function goPage(name){
   PAGES.forEach(function(p){
     document.getElementById('p-'+p).classList.toggle('show',p===name);
     var nb=document.getElementById('nb-'+p);
-    if(nb)nb.classList.toggle('on',p===name);
+    if(nb) nb.classList.toggle('on',p===name);
   });
   var fab=document.getElementById('fab');
   fab.style.display='none';
-  if(name==='trips'){fab.style.display='flex';fab.onclick=function(){openModal('mTrip');};}
-  if(name==='exp'){fab.style.display='flex';fab.onclick=function(){openModal('mExp');};}
-  if(name==='dash')renderDash();
-  if(name==='trips')renderTrips();
-  if(name==='zones')renderZones();
-  if(name==='exp')renderExp();
-  if(name==='guard'){updToday();if(GA){renderBatt();rtDraw();drawStepBar();}}
+  if(name==='trips'){   fab.style.display='flex'; fab.onclick=function(){openModal('mTrip');}; }
+  if(name==='exp'){     fab.style.display='flex'; fab.onclick=function(){openModal('mExp');}; }
+  if(name==='dash')   renderDash();
+  if(name==='trips')  renderTrips();
+  if(name==='zones')  renderZones();
+  if(name==='exp')    renderExp();
+  if(name==='guard'){ updToday(); if(GA)renderBatt(); renderNav(); }
 }
 
-// ── Dashboard ─────────────────────────────────────────────────────────────
+function renderNav(){
+  var nb=document.getElementById('nb-guard');
+  if(GA){
+    nb.innerHTML='<span class="ic" style="animation:pulse 2s infinite">🛡️</span><span style="color:#4ADE80">● VIVO</span>';
+    nb.style.background='rgba(34,197,94,0.1)';
+    nb.style.borderColor='rgba(34,197,94,0.3)';
+    nb.style.color='#4ADE80';
+  } else {
+    nb.innerHTML='<span class="ic">🛡️</span>GUARDIA';
+    nb.style.background=''; nb.style.borderColor=''; nb.style.color='';
+    nb.className='nb';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════════════════════════
 function renderDash(){
   var h='';
   [7,15,30].forEach(function(d){
-    h+='<button onclick="fDays='+d+';renderDash()" style="padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid '+(fDays===d?'#F5A623':'rgba(255,255,255,.1)')+';background:'+(fDays===d?'rgba(245,166,35,.15)':'transparent')+';color:'+(fDays===d?'#F5A623':'#64748B')+';cursor:pointer">'+d+' dias</button>';
+    h+='<button onclick="fDays='+d+';renderDash()" style="padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid '+(fDays===d?'#F5A623':'rgba(255,255,255,.1)')+';background:'+(fDays===d?'rgba(245,166,35,.15)':'transparent')+';color:'+(fDays===d?'#F5A623':'#64748B')+';cursor:pointer">'+d+' días</button>';
   });
   document.getElementById('dFilters').innerHTML=h;
+
   var cut=Date.now()-fDays*86400000;
   var ft=trips.filter(function(t){return t.ts>=cut;});
   var inc=ft.reduce(function(s,t){return s+t.fare+(t.tip||0);},0);
-  var km=ft.reduce(function(s,t){return s+(t.km||0);},0);
-  var ec=expenses.filter(function(e){return e.ts>=cut;}).reduce(function(s,e){return s+e.amount;},0);
-  var net=inc-km*CPK-ec,avg=ft.length?inc/ft.length:0;
-  function sc(l,v,s,c){return '<div class="card" style="position:relative;overflow:hidden"><div style="position:absolute;left:0;top:0;width:3px;height:100%;background:'+c+'"></div><div class="sml">'+l+'</div><div class="mono" style="font-size:19px;font-weight:800;margin:3px 0">'+v+'</div><div class="sml">'+s+'</div></div>';}
+  var km =ft.reduce(function(s,t){return s+(t.km||0);},0);
+  var ec =expenses.filter(function(e){return e.ts>=cut;}).reduce(function(s,e){return s+e.amount;},0);
+  var net=inc-km*CPK-ec, avg=ft.length?inc/ft.length:0;
+
+  function sc(l,v,s,c){
+    return '<div class="card scard" style="position:relative;overflow:hidden">'+
+      '<div style="position:absolute;left:0;top:0;width:3px;height:100%;background:'+c+'"></div>'+
+      '<div class="sml">'+l+'</div>'+
+      '<div class="mono" style="font-size:19px;font-weight:800;margin:3px 0">'+v+'</div>'+
+      '<div class="sml">'+s+'</div></div>';
+  }
   document.getElementById('dStats').innerHTML=
     sc('Ingreso Bruto',fm(inc),ft.length+' viajes','#F5A623')+
-    sc('Utilidad Neta',fm(net),fm(km*CPK)+' energia',net>=0?'#4ADE80':'#F87171')+
+    sc('Utilidad Neta',fm(net),fm(km*CPK)+' energía',net>=0?'#4ADE80':'#F87171')+
     sc('Promedio/Viaje',fm(avg),km.toFixed(1)+' km','#60A5FA')+
-    sc('Costo/km',fm(CPK),'13kWh Air-e 2025','#4ADE80');
+    sc('Costo ⚡/km',fm(CPK),'13kWh · Air-e 2025','#4ADE80');
+
   var byP={};
-  ft.forEach(function(t){if(!byP[t.platform])byP[t.platform]={c:0,i:0,k:0};byP[t.platform].c++;byP[t.platform].i+=t.fare+(t.tip||0);byP[t.platform].k+=(t.km||0);});
+  ft.forEach(function(t){
+    if(!byP[t.platform])byP[t.platform]={c:0,i:0,k:0};
+    byP[t.platform].c++; byP[t.platform].i+=t.fare+(t.tip||0); byP[t.platform].k+=(t.km||0);
+  });
   var ph='';
   Object.keys(byP).forEach(function(pid){
     var p=byP[pid],pl=PLATS[pid]||{n:pid,bg:'#444'};
-    var pnet=p.i-p.k*CPK,cpk=p.k>0?p.i/p.k:0;
-    ph+='<div class="card"><div class="row" style="margin-bottom:6px"><span class="badge" style="background:'+pl.bg+'">'+pl.n+'</span><span class="green" style="font-weight:700">'+fm(pnet)+' neto</span></div><div style="font-size:11px;color:#64748B">'+p.c+' viajes - '+fm(p.i)+' bruto - '+fm(cpk)+'/km</div></div>';
+    var pnet=p.i-p.k*CPK, cpk=p.k>0?p.i/p.k:0;
+    ph+='<div class="card"><div class="row" style="margin-bottom:6px">'+
+      '<span class="badge" style="background:'+pl.bg+'">'+pl.n+'</span>'+
+      '<span class="green" style="font-weight:700">'+fm(pnet)+' neto</span></div>'+
+      '<div style="font-size:11px;color:#64748B">'+p.c+' viajes · '+fm(p.i)+' bruto · ⚡ '+fm(cpk)+'/km</div></div>';
   });
-  document.getElementById('dPlat').innerHTML=ph||'<div style="text-align:center;padding:32px;color:#475569">Sin viajes en este periodo</div>';
+  document.getElementById('dPlat').innerHTML=ph||'<div style="text-align:center;padding:32px;color:#475569">Sin viajes en este período</div>';
 }
 
-// ── Trips ─────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// TRIPS
+// ═══════════════════════════════════════════════════════════════════════════
 function renderTrips(){
-  document.getElementById('tCount2').textContent=trips.length+' viajes registrados';
-  if(!trips.length){document.getElementById('tList').innerHTML='<div style="text-align:center;padding:36px;color:#475569">Sin viajes aun</div>';return;}
-  var s=trips.slice().sort(function(a,b){return b.ts-a.ts;}),h='';
+  document.getElementById('tCount').textContent=trips.length+' viajes registrados';
+  if(!trips.length){document.getElementById('tList').innerHTML='<div style="text-align:center;padding:36px;color:#475569">📋 Sin viajes aún</div>';return;}
+  var s=trips.slice().sort(function(a,b){return b.ts-a.ts;}), h='';
   s.forEach(function(t){
     var pl=PLATS[t.platform]||{n:t.platform,bg:'#444'};
-    var pu=t.pickup||0;
-    var cost=(t.km+pu)*CPK,net=t.fare+(t.tip||0)-cost,cpk=t.km?t.fare/t.km:0;
-    h+='<div class="trow">'
-      +'<div><div style="display:flex;align-items:center;gap:7px;margin-bottom:4px">'
-      +'<span class="badge" style="background:'+pl.bg+';font-size:9px">'+pl.n+'</span>'
-      +'<span style="font-size:11px;color:#64748B">'+fd(t.ts)+'</span></div>'
-      +'<div style="font-size:12px;color:#94A3B8">'+fm(t.fare+(t.tip||0))+(t.km?' - '+t.km+'km':'')+' - '+fm(cpk)+'/km'+(pu?' - '+pu+'km recogida':'')+'</div></div>'
-      +'<div style="display:flex;align-items:center;gap:7px">'
-      +'<div style="text-align:right"><div class="mono" style="font-size:14px;font-weight:700;color:'+(net>=0?'#4ADE80':'#F87171')+'">'+fm(net)+'</div><div class="sml">utilidad</div></div>'
-      +'<button data-ts="'+t.ts+'" class="del-trip" style="background:rgba(239,68,68,.1);border-radius:8px;color:#F87171;padding:6px 9px;font-size:13px;cursor:pointer;border:none">&#x2715;</button>'
-      +'</div></div>';
+    var cost=(t.km||0)*CPK, net=t.fare+(t.tip||0)-cost, cpk=t.km?t.fare/t.km:0;
+    h+='<div class="trow">'+
+      '<div><div style="display:flex;align-items:center;gap:7px;margin-bottom:4px">'+
+      '<span class="badge" style="background:'+pl.bg+';font-size:9px">'+pl.n+'</span>'+
+      '<span style="font-size:11px;color:#64748B">'+fd(t.ts)+'</span></div>'+
+      '<div style="font-size:12px;color:#94A3B8">💰 '+fm(t.fare+(t.tip||0))+(t.km?' · 📍 '+t.km+'km':'')+' · ⚡ '+fm(cpk)+'/km</div></div>'+
+      '<div style="display:flex;align-items:center;gap:7px">'+
+      '<div style="text-align:right"><div class="mono" style="font-size:14px;font-weight:700;color:'+(net>=0?'#4ADE80':'#F87171')+'">'+fm(net)+'</div>'+
+      '<div class="sml">utilidad</div></div>'+
+      '<button data-ts="'+t.ts+'" class="del-trip" style="background:rgba(239,68,68,.1);border-radius:8px;color:#F87171;padding:6px 9px;font-size:13px;cursor:pointer;border:none">✕</button>'+
+      '</div></div>';
   });
   document.getElementById('tList').innerHTML=h;
   document.getElementById('tList').onclick=function(e){
     var btn=e.target.closest('.del-trip');
     if(!btn)return;
-    trips=trips.filter(function(t){return t.ts!==parseInt(btn.dataset.ts);});
-    sv('diq_t',trips);renderTrips();updToday();
+    var ts=parseInt(btn.dataset.ts);
+    trips=trips.filter(function(t){return t.ts!==ts;});
+    sv('diq_t',trips); renderTrips(); updToday();
   };
 }
 
-// ── Zones ─────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// ZONES
+// ═══════════════════════════════════════════════════════════════════════════
 function renderZones(){
   var h='';
   ZONES.forEach(function(z){
     var col=z.d>=90?'#F87171':z.d>=80?'#F5A623':'#818CF8';
-    var bg=z.d>=90?'rgba(239,68,68,.1)':z.d>=80?'rgba(245,166,35,.1)':'rgba(99,102,241,.1)';
-    var pk=z.p.map(function(p){return '<span style="font-size:10px;background:rgba(96,165,250,.1);color:#60A5FA;padding:2px 7px;border-radius:6px">'+p+'</span>';}).join(' ');
-    h+='<div class="zone">'
-      +'<div class="row" style="margin-bottom:5px">'
-      +'<div><div style="font-weight:700;font-size:13px">'+z.n+'</div><div style="font-size:11px;color:#64748B;margin-top:1px">'+z.t+'</div></div>'
-      +'<span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:14px;background:'+bg+';color:'+col+'">'+z.d+'%</span></div>'
-      +'<div class="bb" style="height:4px;margin:5px 0"><div class="bf" style="width:'+z.d+'%;background:'+col+'"></div></div>'
-      +'<div style="display:flex;flex-wrap:wrap;gap:5px">'+pk+'</div></div>';
+    var bg =z.d>=90?'rgba(239,68,68,.1)':z.d>=80?'rgba(245,166,35,.1)':'rgba(99,102,241,.1)';
+    var pk =z.p.map(function(p){return '<span style="font-size:10px;background:rgba(96,165,250,.1);color:#60A5FA;padding:2px 7px;border-radius:6px">⏰ '+p+'</span>';}).join(' ');
+    h+='<div class="zone">'+
+      '<div class="row" style="margin-bottom:5px">'+
+      '<div><div style="font-weight:700;font-size:13px">'+z.n+'</div><div style="font-size:11px;color:#64748B;margin-top:1px">'+z.t+'</div></div>'+
+      '<span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:14px;background:'+bg+';color:'+col+'">'+z.d+'%</span></div>'+
+      '<div class="bb" style="height:4px;margin:6px 0"><div class="bf" style="width:'+z.d+'%;background:'+col+'"></div></div>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:5px">'+pk+'</div></div>';
   });
   document.getElementById('zList').innerHTML=h;
 }
 
-// ── Expenses ──────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// EXPENSES
+// ═══════════════════════════════════════════════════════════════════════════
 function renderExp(){
   var tot=expenses.reduce(function(s,e){return s+e.amount;},0);
   document.getElementById('eTot').textContent=fm(tot);
-  if(!expenses.length){document.getElementById('eList').innerHTML='<div style="text-align:center;padding:36px;color:#475569">Sin gastos aun</div>';return;}
-  var ICONS={carga:'',mant:'',lavado:'',llantas:'',multa:'',seguro:'',otro:''};
-  var s=expenses.slice().sort(function(a,b){return b.ts-a.ts;}),h='';
+  if(!expenses.length){document.getElementById('eList').innerHTML='<div style="text-align:center;padding:36px;color:#475569">💸 Sin gastos aún</div>';return;}
+  var ICONS={carga:'⚡',mant:'🔧',lavado:'🚿',llantas:'🔄',multa:'📄',seguro:'🛡️',otro:'📦'};
+  var s=expenses.slice().sort(function(a,b){return b.ts-a.ts;}), h='';
   s.forEach(function(e){
-    h+='<div class="trow">'
-      +'<div><div style="font-size:14px;font-weight:600">'+(e.desc||e.type)+'</div><div style="font-size:11px;color:#64748B">'+fd(e.ts)+'</div></div>'
-      +'<div style="display:flex;align-items:center;gap:7px">'
-      +'<span class="mono red" style="font-weight:700">'+fm(e.amount)+'</span>'
-      +'<button data-ts="'+e.ts+'" class="del-exp" style="background:rgba(239,68,68,.1);border-radius:8px;color:#F87171;padding:5px 8px;font-size:12px;cursor:pointer;border:none">&#x2715;</button>'
-      +'</div></div>';
+    h+='<div class="trow">'+
+      '<div><div style="font-size:14px;font-weight:600">'+(ICONS[e.type]||'📦')+' '+(e.desc||e.type)+'</div>'+
+      '<div style="font-size:11px;color:#64748B">'+fd(e.ts)+'</div></div>'+
+      '<div style="display:flex;align-items:center;gap:7px">'+
+      '<span class="mono red" style="font-weight:700">'+fm(e.amount)+'</span>'+
+      '<button data-ts="'+e.ts+'" class="del-exp" style="background:rgba(239,68,68,.1);border-radius:8px;color:#F87171;padding:5px 8px;font-size:12px;cursor:pointer;border:none">✕</button>'+
+      '</div></div>';
   });
   document.getElementById('eList').innerHTML=h;
   document.getElementById('eList').onclick=function(ev){
     var btn=ev.target.closest('.del-exp');
     if(!btn)return;
-    expenses=expenses.filter(function(e){return e.ts!==parseInt(btn.dataset.ts);});
-    sv('diq_e',expenses);renderExp();
+    var ts=parseInt(btn.dataset.ts);
+    expenses=expenses.filter(function(e){return e.ts!==ts;});
+    sv('diq_e',expenses); renderExp();
   };
 }
 
-// ── Modals ────────────────────────────────────────────────────────────────
-function openModal(id){document.getElementById(id).classList.add('open');}
-function closeModal(id){document.getElementById(id).classList.remove('open');}
+// ═══════════════════════════════════════════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════════════════════════════════════════
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
 
 function saveTrip(){
-  var fare=parseFloat(document.getElementById('mTF').value);if(!fare)return;
+  var fare=parseFloat(document.getElementById('mTF').value); if(!fare)return;
   trips.push({ts:Date.now(),platform:document.getElementById('mTP').value,
     fare:fare,km:parseFloat(document.getElementById('mTK').value)||0,
-    pickup:parseFloat(document.getElementById('mTPU').value)||0,
     tip:parseFloat(document.getElementById('mTT').value)||0});
   sv('diq_t',trips);
-  ['mTF','mTK','mTT','mTPU'].forEach(function(id){document.getElementById(id).value='';});
-  closeModal('mTrip');updToday();
+  ['mTF','mTK','mTT'].forEach(function(id){document.getElementById(id).value='';});
+  closeModal('mTrip'); updToday();
 }
 
 function saveExp(){
-  var amt=parseFloat(document.getElementById('mEAmt').value);if(!amt)return;
+  var amt=parseFloat(document.getElementById('mEAmt').value); if(!amt)return;
   expenses.push({ts:Date.now(),type:document.getElementById('mEType').value,
     amount:amt,desc:document.getElementById('mEDesc').value});
   sv('diq_e',expenses);
@@ -955,35 +938,46 @@ function saveExp(){
   closeModal('mExp');
 }
 
-// ── Install banner ────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// INSTALL BANNER
+// ═══════════════════════════════════════════════════════════════════════════
 var dP=null;
-window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();dP=e;setTimeout(showInstall,2500);});
-setTimeout(function(){if(!dP&&!window.matchMedia('(display-mode:standalone)').matches)showInstall();},7000);
+window.addEventListener('beforeinstallprompt',function(e){
+  e.preventDefault(); dP=e; setTimeout(showInstall,2000);
+});
+setTimeout(function(){
+  if(!dP&&!window.matchMedia('(display-mode:standalone)').matches) showInstall();
+},6000);
+
 function showInstall(){
   if(document.getElementById('iBanner'))return;
   if(window.matchMedia('(display-mode:standalone)').matches)return;
-  var b=document.createElement('div');b.id='iBanner';
+  var b=document.createElement('div'); b.id='iBanner';
   b.style.cssText='position:fixed;bottom:82px;left:50%;transform:translateX(-50%);background:#1E293B;border:1px solid rgba(245,166,35,.5);border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:12px;z-index:200;max-width:340px;width:calc(100% - 32px);box-shadow:0 8px 28px rgba(0,0,0,.6);font-family:system-ui';
   if(dP){
-    b.innerHTML='<span style="font-size:22px">&#x1F4F2;</span><div style="flex:1"><div style="font-size:13px;font-weight:700;color:#F1F5F9">Instalar DriveIQ</div><div style="font-size:11px;color:#64748B;margin-top:2px">Sin Play Store</div></div><button id="iBtnI" style="background:linear-gradient(135deg,#F5A623,#F97316);border:none;border-radius:8px;color:#fff;font-weight:800;font-size:12px;padding:8px 14px;cursor:pointer">Instalar</button><button id="iBtnX" style="background:none;border:none;color:#475569;font-size:20px;cursor:pointer;padding:4px">&#x2715;</button>';
+    b.innerHTML='<span style="font-size:24px">📲</span><div style="flex:1"><div style="font-size:13px;font-weight:700;color:#F1F5F9">Instalar DriveIQ</div><div style="font-size:11px;color:#64748B;margin-top:2px">Sin Play Store</div></div><button id="iBtnI" style="background:linear-gradient(135deg,#F5A623,#F97316);border:none;border-radius:8px;color:#fff;font-weight:800;font-size:12px;padding:8px 14px;cursor:pointer">Instalar</button><button id="iBtnX" style="background:none;border:none;color:#475569;font-size:20px;cursor:pointer;padding:4px">✕</button>';
     document.body.appendChild(b);
     document.getElementById('iBtnI').onclick=function(){dP.prompt();dP.userChoice.then(function(){b.remove();dP=null;});};
-  }else{
-    b.innerHTML='<span style="font-size:22px">&#x1F4F2;</span><div style="flex:1"><div style="font-size:13px;font-weight:700;color:#F1F5F9">Instalar DriveIQ</div><div style="font-size:11px;color:#94A3B8;margin-top:2px;line-height:1.5">Toca <b style="color:#F5A623">Menu</b> en Chrome<br>Agregar a inicio</div></div><button id="iBtnX" style="background:none;border:none;color:#475569;font-size:20px;cursor:pointer;padding:4px">&#x2715;</button>';
+  } else {
+    b.innerHTML='<span style="font-size:24px">📲</span><div style="flex:1"><div style="font-size:13px;font-weight:700;color:#F1F5F9">Instalar DriveIQ</div><div style="font-size:11px;color:#94A3B8;margin-top:2px;line-height:1.5">Toca <b style="color:#F5A623">⋮ Menú</b> en Chrome → <b style="color:#F5A623">Agregar a inicio</b></div></div><button id="iBtnX" style="background:none;border:none;color:#475569;font-size:20px;cursor:pointer;padding:4px">✕</button>';
     document.body.appendChild(b);
   }
   document.getElementById('iBtnX').onclick=function(){b.remove();};
 }
 
-// ── PWA manifest ──────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// PWA MANIFEST
+// ═══════════════════════════════════════════════════════════════════════════
 (function(){
   var m='{"name":"DriveIQ Cartagena","short_name":"DriveIQ","start_url":"./","display":"standalone","background_color":"#070B14","theme_color":"#F5A623","orientation":"portrait-primary"}';
-  var lnk=document.createElement('link');lnk.rel='manifest';
+  var lnk=document.createElement('link'); lnk.rel='manifest';
   lnk.href=URL.createObjectURL(new Blob([m],{type:'application/manifest+json'}));
   document.head.appendChild(lnk);
 })();
 
-// ── Init ──────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════════════
 renderZones();
 fDrawUI();
 updToday();
