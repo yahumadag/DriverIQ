@@ -560,71 +560,116 @@ function startGuard() {
 
 function gListen() {
   if (!GA) return;
+  if (GR) { try{GR.abort();}catch(e){} GR=null; }
+
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   var rec;
-  try { rec = new SR(); }
-  catch(e) { gStatus('⚠️ Error SR: '+e.message); if(GA)setTimeout(gListen,2000); return; }
+  try { rec = new SR(); } catch(e) { gStatus('Error: '+e.message); return; }
 
   rec.lang = 'es-CO';
-  rec.continuous = false;
+  rec.continuous = true;        // keep mic open — no aborted errors
   rec.interimResults = false;
-  rec.maxAlternatives = 5;   // More alternatives = better recognition
+  rec.maxAlternatives = 5;
 
-  rec.onstart       = function(){ gStatus('🎙️ Escuchando — di tarifa y km...'); };
-  rec.onspeechstart = function(){ gStatus('🔊 Detectando voz...'); };
+  rec.onstart = function() { gStatus('🎙️ Di tarifa y km...'); };
 
   rec.onresult = function(e) {
-    var best=null;
-    // Try all alternatives with the smart parser
-    for (var i=0; i<e.results[0].length; i++) {
-      var txt = e.results[0][i].transcript.toLowerCase().trim();
-      var p   = parseVoice(txt);
-      if (p && p.length>=2){ best={txt:txt,p:p}; break; }
-      if (!best && p && p.length>=1) best={txt:txt,p:p};
+    // In continuous mode, use resultIndex for latest result
+    var idx = e.resultIndex;
+    if (!e.results[idx].isFinal) return;
+
+    var alts = [];
+    for (var i=0; i<e.results[idx].length; i++) {
+      alts.push(e.results[idx][i].transcript.trim());
+    }
+    var heard = alts[0] || '';
+
+    // Show what was heard
+    gStatus('🔊 "' + heard + '"');
+
+    var best = null;
+
+    // Strategy 1: smart word parser
+    for (var i=0; i<alts.length && !best; i++) {
+      var p = parseVoice(alts[i].toLowerCase());
+      if (p && p.length>=2) best = {txt:alts[i], p:p};
     }
 
-    if (!best){ gStatus('❓ "'+e.results[0][0].transcript+'"'); return; }
-    gStatus('"'+best.txt+'"');
+    // Strategy 2: raw digit extraction
+    if (!best) {
+      for (var i=0; i<alts.length && !best; i++) {
+        var nums = alts[i].replace(/[.,]/g,' ').match(/\d+/g);
+        if (nums && nums.length>=2) {
+          var f0=parseInt(nums[0]), k0=parseInt(nums[1]);
+          if (f0<=100) f0*=1000;
+          if (k0>100)  k0=Math.round(k0/1000)||k0;
+          best = {txt:alts[i], p:[f0,k0]};
+        }
+      }
+    }
 
-    if (best.p.length>=2) {
+    // Strategy 3: partial (1 number)
+    if (!best) {
+      for (var i=0; i<alts.length && !best; i++) {
+        var p = parseVoice(alts[i].toLowerCase());
+        if (p && p.length>=1) best = {txt:alts[i], p:p};
+      }
+    }
+
+    if (!best) {
+      gStatus('❓ "' + heard + '" — di tarifa y km');
+      return;
+    }
+
+    if (best.p.length >= 2) {
       var f=best.p[0], k=best.p[1];
+      gStatus('✅ ' + fm(f) + ' · ' + k + 'km');
       document.getElementById('gFare').textContent = fm(f);
-      document.getElementById('gKm').textContent   = k+'km';
-      document.getElementById('gVals').style.display='block';
-      var r = evaluate(f,k);
-      document.getElementById('gVerdict').style.display='block';
-      document.getElementById('gVerdict').innerHTML=vCard(r,'gClear');
-      GHIST.unshift({r:r,f:f}); if(GHIST.length>5)GHIST.pop();
+      document.getElementById('gKm').textContent   = k + 'km';
+      document.getElementById('gVals').style.display = 'block';
+      var r = evaluate(f, k);
+      RT.pending = {r:r, f:f, k:k};
+      document.getElementById('gVerdict').style.display = 'block';
+      document.getElementById('gVerdict').innerHTML = vCard(r, 'gClear');
+      GHIST.unshift({r:r,f:f}); if(GHIST.length>5) GHIST.pop();
       renderGHist();
       beep(r.good?'good':r.marg?'marg':'bad');
       vib(r.good?[60,40,60]:r.marg?[120]:[250,60,250]);
-      rtRecord(r,f,k);
+      // Stop listening until user taps Acepté/Rechacé/Omitir
+      try { rec.stop(); } catch(e) {}
     } else {
-      gStatus('⚠️ Solo escuché: '+fm(best.p[0])+' — falta el km');
+      gStatus('⚠️ ' + fm(best.p[0]) + ' — falta km');
     }
   };
-
-  rec.onend = function(){ GR=null; if(GA)setTimeout(gListen,250); };
 
   rec.onerror = function(ev) {
-    GR=null;
-    gStatus('mic: '+ev.error);
+    GR = null;
     if (ev.error==='not-allowed'||ev.error==='service-not-allowed') {
       stopGuard();
-      var err=document.getElementById('gErr');
+      var e=document.getElementById('gErr');
       document.getElementById('gOff').style.display='block';
       document.getElementById('gOn').style.display='none';
-      err.style.display='block';
-      err.textContent='❌ Permiso de micrófono denegado.\n\nVe a: Ajustes del teléfono → Apps → Chrome → Permisos → Micrófono → Permitir\n\nLuego toca ACTIVAR de nuevo.';
+      e.style.display='block';
+      e.textContent='Permiso denegado. Ajustes → Apps → Chrome → Permisos → Micrófono → Permitir';
       return;
     }
-    if(GA)setTimeout(gListen, ev.error==='no-speech'?200:900);
+    // Suppress all transient errors silently
+    if (ev.error==='no-speech') return;
+    // For any other error just restart quietly
+    if (GA) setTimeout(gListen, 800);
   };
 
-  GR=rec;
-  try { rec.start(); gStatus('🎙️ Micrófono activo...'); }
-  catch(e){ GR=null; gStatus('⚠️ start: '+e.message); if(GA)setTimeout(gListen,1200); }
+  rec.onend = function() {
+    GR = null;
+    var verdictOn = document.getElementById('gVerdict').style.display !== 'none';
+    if (GA && !verdictOn) setTimeout(gListen, 600);
+  };
+
+  GR = rec;
+  try { rec.start(); }
+  catch(e) { GR=null; if(GA) setTimeout(gListen, 800); }
 }
+
 
 function stopGuard() {
   GA=false;
@@ -642,7 +687,11 @@ function stopGuard() {
 }
 
 function gStatus(m){ document.getElementById('gStatus').textContent=m; }
-function gClear(){ document.getElementById('gVerdict').style.display='none'; }
+function gClear(){
+  document.getElementById('gVerdict').style.display='none';
+  document.getElementById('gVals').style.display='none';
+  if(GA) setTimeout(gListen, 600);
+}
 
 function renderGHist(){
   if(!GHIST.length)return;
