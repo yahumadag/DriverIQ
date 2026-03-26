@@ -320,65 +320,129 @@ function wordsToNum(words) {
 }
 
 function parseVoice(raw) {
-  var t = raw.toLowerCase()
-    .replace(/kilómetros?|kilómetro|kms?/gi,' ')
-    .replace(/pesos?|cop\b/gi,' ')
-    .replace(/[,;.]/g,' ')
-    .replace(/\s+/g,' ').trim();
+  // Split on comma/pause first — comma = definitive separator between fare and km
+  var parts = raw.toLowerCase().split(/[,;]+/);
 
-  var tokens = t.split(' ').filter(Boolean);
-  var numbers = [];
-  var i=0;
+  function extractNumber(txt, isKm) {
+    txt = txt.replace(/kil[oó]metros?|kms?\b/gi,' ')
+             .replace(/pesos?|cop\b/gi,' ')
+             .replace(/[.:]/g,' ')
+             .replace(/\s+/g,' ').trim();
 
+    var tokens = txt.split(' ').filter(Boolean);
+    var numbers = [], i = 0;
+
+    while (i < tokens.length) {
+      var tok = tokens[i];
+      if (['y','con','mas','de','a'].indexOf(tok)>=0) { i++; continue; }
+
+      if (/^\d+$/.test(tok)) {
+        var n = parseInt(tok);
+        if (i+1<tokens.length && tokens[i+1]==='mil') {
+          n=n*1000; i+=2;
+          if (i<tokens.length && /^\d+$/.test(tokens[i])) { n+=parseInt(tokens[i]); i++; }
+          else if (i<tokens.length && W2N[tokens[i]]!==undefined && W2N[tokens[i]]<1000) { n+=W2N[tokens[i]]; i++; }
+        } else { i++; }
+        numbers.push(n); continue;
+      }
+
+      if (W2N[tok] !== undefined) {
+        var group = [], hasMil = false;
+        while (i < tokens.length) {
+          var cur = tokens[i];
+          if (cur==='y') { i++; continue; }
+          if (cur==='mil') { group.push(cur); hasMil=true; i++; continue; }
+          if (W2N[cur]!==undefined) {
+            if (group.length>0) {
+              var lastW=group[group.length-1];
+              var lastV=W2N[lastW]!==undefined?W2N[lastW]:1000;
+              var curV=W2N[cur];
+              var ok = (lastW==='mil')                         // after mil
+                    || (lastV>=100&&lastV<1000&&curV<100)      // ciento + X
+                    || (lastV>=1000&&curV<1000&&hasMil);       // after mil context
+              if (!ok) break;
+            }
+            group.push(cur); i++;
+          } else { break; }
+        }
+        if (group.length>0) {
+          var nw=wordsToNum(group);
+          if (nw>=0) numbers.push(nw);
+        }
+        continue;
+      }
+
+      var emb=tok.match(/\d+/);
+      if (emb) { numbers.push(parseInt(emb[0])); i++; continue; }
+      i++;
+    }
+
+    if (!numbers.length) return null;
+    var v = numbers[0];
+    if (isKm) return (v>200 ? Math.round(v/1000) : v);
+    return (v<=100 ? v*1000 : v);
+  }
+
+  // If comma-separated: part[0]=fare, part[1]=km
+  if (parts.length >= 2) {
+    var f = extractNumber(parts[0].trim(), false);
+    var k = extractNumber(parts[1].trim(), true);
+    if (f && k) return [f, k];
+  }
+
+  // No comma — try extracting 2 numbers from single phrase
+  var txt = parts[0].trim().replace(/[,;.]/g,' ');
+  txt = txt.replace(/kil[oó]metros?|kms?\b/gi,' ').replace(/pesos?|cop\b/gi,' ');
+  txt = txt.replace(/\s+/g,' ').trim();
+
+  var tokens = txt.split(' ').filter(Boolean);
+  var allNums = [], i = 0;
   while (i < tokens.length) {
     var tok = tokens[i];
-
-    // Skip connectors
-    if (tok==='y' || tok==='con' || tok==='más' || tok==='mas') { i++; continue; }
-
-    // Digit token
+    if (['y','con','mas','de','a'].indexOf(tok)>=0) { i++; continue; }
     if (/^\d+$/.test(tok)) {
-      var n = parseInt(tok);
-      // "12 mil" pattern
+      var n=parseInt(tok);
       if (i+1<tokens.length && tokens[i+1]==='mil') {
-        n = n*1000; i+=2;
-        // optional hundreds after: "12 mil 500" or "doce mil quinientos"
-        if (i<tokens.length && /^\d+$/.test(tokens[i])) { n+=parseInt(tokens[i]); i++; }
-        else if (i<tokens.length && W2N[tokens[i]]!==undefined) { n+=W2N[tokens[i]]; i++; }
+        n=n*1000;i+=2;
+        if(i<tokens.length&&/^\d+$/.test(tokens[i])){n+=parseInt(tokens[i]);i++;}
+        else if(i<tokens.length&&W2N[tokens[i]]!==undefined&&W2N[tokens[i]]<1000){n+=W2N[tokens[i]];i++;}
       } else { i++; }
-      numbers.push(n); continue;
+      allNums.push(n); continue;
     }
-
-    // Word number group
     if (W2N[tok]!==undefined) {
       var group=[];
-      while (i<tokens.length && (W2N[tokens[i]]!==undefined || tokens[i]==='y' || tokens[i]==='mil')) {
-        group.push(tokens[i]); i++;
+      while (i<tokens.length) {
+        var cur=tokens[i];
+        if (cur==='y'){i++;continue;}
+        if (cur==='mil'){group.push(cur);i++;continue;}
+        if (W2N[cur]!==undefined) {
+          if (group.length>0) {
+            var lastW=group[group.length-1];
+            var lastV=W2N[lastW]!==undefined?W2N[lastW]:1000;
+            var curV=W2N[cur];
+            var ok=(lastW==='mil')||(lastV>=100&&lastV<1000&&curV<100)||(lastV>=1000&&curV<1000);
+            if (!ok) break;
+          }
+          group.push(cur);i++;
+        } else { break; }
       }
-      var nw = wordsToNum(group);
-      if (nw>0) numbers.push(nw);
+      if (group.length>0){var nw=wordsToNum(group);if(nw>=0)allNums.push(nw);}
       continue;
     }
+    var emb=tok.match(/\d+/);
+    if(emb){allNums.push(parseInt(emb[0]));i++;continue;}
     i++;
   }
 
-  if (!numbers.length) return null;
+  if (!allNums.length) return null;
+  if (allNums.length===1) return [allNums[0]<=100?allNums[0]*1000:allNums[0]];
 
-  // Interpret: user says fare first (big), km second (small)
-  // If first number is small (<=100), assume it's thousands (spoken abbreviation)
-  var result=[];
-  for (var j=0; j<numbers.length; j++) {
-    var v = numbers[j];
-    if (result.length===0) {
-      // First number = fare
-      result.push(v<=100 ? v*1000 : v);
-    } else {
-      // Second number = km (should be small, 1–60)
-      result.push(v);
-    }
-  }
-  return result;
+  var f=allNums[0], k=allNums[1];
+  if (f<=100) f*=1000;
+  if (k>200) k=Math.round(k/1000);
+  return [f, k];
 }
+
 
 // ═══════════════════════════════════════════════════════════════════════════
 // EVALUATION ENGINE  (dynamic thresholds)
